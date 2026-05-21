@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import List
 import os
 
 class Settings(BaseSettings):
@@ -14,16 +13,21 @@ class Settings(BaseSettings):
     
     STORAGE_PATH: str = os.getenv("STORAGE_PATH", "./storage")
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
-    ALLOWED_EXTENSIONS: List[str] = [
-        '.txt', '.pdf', '.doc', '.docx', 
-        '.jpg', '.jpeg', '.png', '.gif',
-        '.mp4', '.mp3', '.zip', '.rar'
-    ]
+    
+    # 不使用 BaseSettings 的环境变量解析，直接硬编码
+    @property
+    def ALLOWED_EXTENSIONS(self):
+        return [
+            '.txt', '.pdf', '.doc', '.docx', 
+            '.jpg', '.jpeg', '.png', '.gif',
+            '.mp4', '.mp3', '.zip', '.rar'
+        ]
     
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     
     class Config:
         env_file = ".env"
         case_sensitive = False
+        env_file_encoding = "utf-8"
 
 settings = Settings()
