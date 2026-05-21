@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { filesAPI } from '../api/files';
 
 export default function FileActionModals({
@@ -16,7 +16,7 @@ export default function FileActionModals({
   const [error, setError] = useState('');
 
   // 初始化
-  useState(() => {
+  useEffect(() => {
     if (file) {
       setNewName(file.name);
     }
