@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// 开发环境使用相对路径通过 Vite 代理，生产环境使用环境变量
+const API_BASE_URL = import.meta.env.PROD 
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') 
+  : '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
