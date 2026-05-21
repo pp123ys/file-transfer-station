@@ -3,11 +3,11 @@ import uuid
 from pathlib import Path
 from typing import Optional
 from fastapi import UploadFile, HTTPException, status
-from app.config import settings
+from app.config import STORAGE_PATH, MAX_FILE_SIZE, ALLOWED_EXTENSIONS
 
 def get_user_storage_path(user_id: int) -> Path:
     """获取用户的存储路径"""
-    storage_path = Path(settings.STORAGE_PATH) / "users" / str(user_id) / "files"
+    storage_path = Path(STORAGE_PATH) / "users" / str(user_id) / "files"
     storage_path.mkdir(parents=True, exist_ok=True)
     return storage_path
 
@@ -24,7 +24,7 @@ def get_file_extension(filename: str) -> str:
 def is_allowed_file(filename: str) -> bool:
     """检查文件类型是否允许"""
     ext = get_file_extension(filename)
-    return ext in settings.ALLOWED_EXTENSIONS
+    return ext in ALLOWED_EXTENSIONS
 
 def get_file_path(user_id: int, db_path: str) -> Path:
     """根据数据库路径获取物理文件路径"""
@@ -53,7 +53,7 @@ async def save_upload_file(upload_file: UploadFile, user_id: int) -> tuple[str, 
     if not is_allowed_file(upload_file.filename):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"不支持的文件类型，仅支持: {', '.join(settings.ALLOWED_EXTENSIONS)}"
+            detail=f"不支持的文件类型，仅支持: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
     storage_path = get_user_storage_path(user_id)
@@ -64,12 +64,12 @@ async def save_upload_file(upload_file: UploadFile, user_id: int) -> tuple[str, 
     with open(file_path, "wb") as buffer:
         while chunk := await upload_file.read(8192):
             file_size += len(chunk)
-            if file_size > settings.MAX_FILE_SIZE:
+            if file_size > MAX_FILE_SIZE:
                 buffer.close()
                 os.remove(file_path)
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"文件大小超过限制 ({settings.MAX_FILE_SIZE // (1024*1024)}MB)"
+                    detail=f"文件大小超过限制 ({MAX_FILE_SIZE // (1024*1024)}MB)"
                 )
             buffer.write(chunk)
     
