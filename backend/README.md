@@ -1,4 +1,4 @@
-# CloudFile Backend
+CREATE DATABASE filemanager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;CREATE DATABASE filemanager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;# CloudFile Backend
 
 ## 环境要求
 

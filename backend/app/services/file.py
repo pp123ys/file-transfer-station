@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile, status
 from app.models.file import File
@@ -108,11 +109,13 @@ class FileService:
         
         # 如果要重命名
         if update_data.name and update_data.name != file.name:
-            # 检查同名文件是否存在
+            # 检查同名文件是否存在（区分文件/文件夹）
+            parent_id = update_data.parent_id if update_data.parent_id is not None else file.parent_id
             existing = db.query(File).filter(
                 File.user_id == user.id,
-                File.parent_id == file.parent_id if update_data.parent_id is None else update_data.parent_id,
+                File.parent_id == parent_id,
                 File.name == update_data.name,
+                File.is_folder == file.is_folder,
                 File.id != file_id
             ).first()
             
@@ -136,6 +139,9 @@ class FileService:
                     )
             
             file.parent_id = update_data.parent_id
+        
+        # 更新时间戳
+        file.updated_at = datetime.utcnow()
         
         db.commit()
         db.refresh(file)

@@ -26,9 +26,6 @@ export const filesAPI = {
     }
 
     const response = await api.post('/api/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
       onUploadProgress: onProgress ? (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         onProgress(percentCompleted);
