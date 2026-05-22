@@ -7,6 +7,7 @@ import UploadModal from '../components/UploadModal';
 import CreateFolderModal from '../components/CreateFolderModal';
 import ContextMenu from '../components/ContextMenu';
 import FileActionModals from '../components/FileActionModals';
+import PreviewModal from '../components/PreviewModal';
 import { useAuth } from '../context/AuthContext';
 import { filesAPI } from '../api/files';
 
@@ -27,6 +28,8 @@ export default function Home() {
     showMove: false,
   });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     loadFiles();
@@ -50,9 +53,15 @@ export default function Home() {
       setBreadcrumbPath([...breadcrumbPath, file]);
       setCurrentFolderId(file.id);
     } else {
-      // 下载文件
-      filesAPI.downloadFile(file.id, file.name);
+      // 预览文件
+      setPreviewFile(file);
+      setShowPreview(true);
     }
+  };
+
+  const handlePreview = (file) => {
+    setPreviewFile(file);
+    setShowPreview(true);
   };
 
   const handleNavigate = (item) => {
@@ -174,6 +183,7 @@ export default function Home() {
           y={contextMenu.y}
           file={contextMenu.file}
           onClose={() => setContextMenu(null)}
+          onPreview={handlePreview}
           onDownload={handleDownload}
           onRename={handleRename}
           onDelete={handleDelete}
@@ -189,6 +199,12 @@ export default function Home() {
         folders={files}
         onClose={handleActionModalClose}
         onSuccess={handleActionSuccess}
+      />
+
+      <PreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        file={previewFile}
       />
     </div>
   );

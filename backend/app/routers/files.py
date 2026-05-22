@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.database import get_db
@@ -11,6 +11,7 @@ from app.schemas.file import (
 from app.services.file import FileService
 from app.utils.security import get_current_user
 from app.utils.file import get_file_path
+import mimetypes
 
 router = APIRouter(prefix="/api/files", tags=["文件"])
 
@@ -76,6 +77,35 @@ async def download_file(
     return FileResponse(
         path=str(file_path),
         media_type="application/octet-stream",
+        filename=file.name
+    )
+
+@router.get("/preview/{file_id}")
+async def preview_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """预览文件"""
+    file = FileService.get_file_by_id(db, file_id, current_user)
+    if not file:
+        raise HTTPException(status_code=404, detail="文件不存在")
+
+    if file.is_folder:
+        raise HTTPException(status_code=400, detail="文件夹无法预览")
+
+    file_path = get_file_path(current_user.id, file.path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+
+    # 获取文件MIME类型
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if mime_type is None:
+        mime_type = "application/octet-stream"
+
+    return FileResponse(
+        path=str(file_path),
+        media_type=mime_type,
         filename=file.name
     )
 

@@ -51,6 +51,11 @@ export const filesAPI = {
     window.URL.revokeObjectURL(url);
   },
 
+  // 获取文件预览URL
+  getPreviewUrl: (fileId) => {
+    return `${api.defaults.baseURL}/api/files/preview/${fileId}`;
+  },
+
   // 更新文件（重命名/移动）
   updateFile: async (fileId, data) => {
     const response = await api.put(`/api/files/${fileId}`, data);
