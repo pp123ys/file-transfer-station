@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Query, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -39,12 +39,20 @@ async def create_folder(
 @router.post("/upload", response_model=FileSchema, status_code=201)
 async def upload_file(
     file: UploadFile = File(...),
-    parent_id: Optional[int] = Query(None, description="上传到哪个文件夹"),
+    parent_id: Optional[str] = Form(None, description="上传到哪个文件夹"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """上传文件"""
-    uploaded_file = await FileService.upload_file(db, current_user, file, parent_id)
+    # 处理 parent_id 的类型转换
+    parent_id_int = None
+    if parent_id and parent_id.strip():
+        try:
+            parent_id_int = int(parent_id.strip())
+        except ValueError:
+            pass
+    
+    uploaded_file = await FileService.upload_file(db, current_user, file, parent_id_int)
     return FileSchema.model_validate(uploaded_file)
 
 @router.get("/download/{file_id}")
