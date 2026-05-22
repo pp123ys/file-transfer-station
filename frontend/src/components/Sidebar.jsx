@@ -53,7 +53,7 @@ export default function Sidebar({ onNavigate, currentFolderId }) {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => onNavigate(null)}
+              onClick={() => onNavigate(item)}
               className={`w-full flex items-center px-3 py-2 rounded-md text-body-sm transition-all duration-200 ${
                 item.id === 'all' && !currentFolderId
                   ? 'bg-canvas-soft text-ink font-medium'

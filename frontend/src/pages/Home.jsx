@@ -70,7 +70,7 @@ export default function Home() {
 
   const handleNavigate = (item) => {
     setSearchQuery('');
-    if (item === null) {
+    if (item === null || item.id === 'all') {
       setBreadcrumbPath([]);
       setCurrentFolderId(null);
     } else {
@@ -78,6 +78,9 @@ export default function Home() {
       if (index !== -1) {
         setBreadcrumbPath(breadcrumbPath.slice(0, index + 1));
         setCurrentFolderId(item.id);
+      } else {
+        setBreadcrumbPath([]);
+        setCurrentFolderId(null);
       }
     }
   };
