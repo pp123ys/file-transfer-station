@@ -2,11 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa;
+  color: #171717;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+/* Vercel-style buttons */
+.btn-primary {
+  @apply bg-primary text-white font-medium px-4 py-2 rounded-pill transition-all duration-200 hover:bg-opacity-90;
+}
+
+.btn-secondary {
+  @apply bg-white text-ink font-medium px-4 py-2 rounded-pill border border-hairline transition-all duration-200 hover:bg-canvas-soft;
+}
+
+.btn-primary-sm {
+  @apply bg-primary text-white font-medium px-3 py-1.5 rounded-pill text-sm transition-all duration-200 hover:bg-opacity-90;
+}
+
+.btn-secondary-sm {
+  @apply bg-white text-ink font-medium px-3 py-1.5 rounded-pill text-sm border border-hairline transition-all duration-200 hover:bg-canvas-soft;
+}
+
+/* Card styles */
+.card-marketing {
+  @apply bg-white rounded-md p-lg shadow-level-3;
+}
+
+.card-soft {
+  @apply bg-canvas-soft rounded-md p-lg;
+}
+
+/* Input styles */
+.form-input {
+  @apply bg-white border border-hairline rounded-sm px-4 py-2 text-sm transition-all duration-200 focus:outline-none focus:border-primary;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ebebeb;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }

@@ -1,129 +1,89 @@
-import { useState, useEffect } from 'react';
-import { filesAPI } from '../api/files';
-
 export default function Sidebar({ onNavigate, currentFolderId }) {
-  const [folders, setFolders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedFolders, setExpandedFolders] = useState([]);
+  const menuItems = [
+    { id: 'all', label: '全部文件', icon: 'folder' },
+    { id: 'documents', label: '文档', icon: 'file-text' },
+    { id: 'images', label: '图片', icon: 'image' },
+    { id: 'videos', label: '视频', icon: 'video' },
+    { id: 'downloads', label: '下载', icon: 'download' },
+    { id: 'trash', label: '回收站', icon: 'trash' },
+  ];
 
-  useEffect(() => {
-    loadFolders();
-  }, []);
-
-  const loadFolders = async () => {
-    try {
-      setLoading(true);
-      const response = await filesAPI.getFiles(null);
-      const folderList = response.files.filter(f => f.is_folder);
-      setFolders(folderList);
-    } catch (err) {
-      console.error('加载文件夹失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFolderClick = (folder) => {
-    if (expandedFolders.includes(folder.id)) {
-      setExpandedFolders(expandedFolders.filter(id => id !== folder.id));
-    } else {
-      setExpandedFolders([...expandedFolders, folder.id]);
-    }
-    onNavigate(folder);
-  };
-
-  const loadSubFolders = async (parentId) => {
-    try {
-      const response = await filesAPI.getFiles(parentId);
-      return response.files.filter(f => f.is_folder);
-    } catch (err) {
-      console.error('加载子文件夹失败:', err);
-      return [];
-    }
-  };
-
-  const FolderItem = ({ folder, level = 0 }) => {
-    const [subFolders, setSubFolders] = useState([]);
-    const [loaded, setLoaded] = useState(false);
-    const isExpanded = expandedFolders.includes(folder.id);
-    const isActive = currentFolderId === folder.id;
-
-    useEffect(() => {
-      if (isExpanded && !loaded) {
-        loadSubFolders(folder.id).then(sub => {
-          setSubFolders(sub);
-          setLoaded(true);
-        });
-      }
-    }, [isExpanded, folder.id, loaded]);
-
-    return (
-      <div>
-        <div
-          onClick={() => handleFolderClick(folder)}
-          className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-            isActive ? 'bg-blue-50 text-blue-600' : ''
-          }`}
-          style={{ paddingLeft: `${level * 16 + 16}px` }}
-        >
-          {subFolders.length > 0 && (
-            <svg
-              className={`w-4 h-4 mr-2 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          )}
-          {subFolders.length === 0 && <span className="w-4 mr-2"></span>}
-
-          <svg className="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-          </svg>
-          <span className="truncate">{folder.name}</span>
-        </div>
-
-        {isExpanded && subFolders.map(subFolder => (
-          <FolderItem key={subFolder.id} folder={subFolder} level={level + 1} />
-        ))}
-      </div>
-    );
+  const getIcon = (iconName) => {
+    const icons = {
+      'folder': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      ),
+      'file-text': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      'image': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      'video': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      'download': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+      ),
+      'trash': (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ),
+    };
+    return icons[iconName] || icons['folder'];
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+    <aside className="w-64 bg-canvas border-r border-hairline fixed left-0 top-16 h-[calc(100vh-4rem)] overflow-y-auto">
       <div className="p-4">
-        <h2 className="text-sm font-semibold text-gray-600 uppercase mb-4">快速访问</h2>
+        <h2 className="text-caption-mono text-mute uppercase tracking-wider mb-3">快速访问</h2>
+        <nav className="space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(null)}
+              className={`w-full flex items-center px-3 py-2 rounded-md text-body-sm transition-all duration-200 ${
+                item.id === 'all' && !currentFolderId
+                  ? 'bg-canvas-soft text-ink font-medium'
+                  : 'text-body hover:text-ink hover:bg-canvas-soft'
+              }`}
+            >
+              {getIcon(item.icon)}
+              <span className="ml-3">{item.label}</span>
+            </button>
+          ))}
+        </nav>
 
-        {/* 全部文件 */}
-        <div
-          onClick={() => onNavigate(null)}
-          className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-            currentFolderId === null ? 'bg-blue-50 text-blue-600' : ''
-          }`}
-        >
-          <svg className="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-          </svg>
-          <span>全部文件</span>
+        <div className="mt-8">
+          <h2 className="text-caption-mono text-mute uppercase tracking-wider mb-3">我的文件夹</h2>
+          <nav className="space-y-1">
+            <button
+              onClick={() => onNavigate(null)}
+              className={`w-full flex items-center px-3 py-2 rounded-md text-body-sm transition-all duration-200 ${
+                currentFolderId === null
+                  ? 'bg-canvas-soft text-ink font-medium'
+                  : 'text-body hover:text-ink hover:bg-canvas-soft'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="ml-3">根目录</span>
+            </button>
+          </nav>
         </div>
-
-        {/* 加载状态 */}
-        {loading ? (
-          <div className="px-4 py-2 text-gray-500">加载中...</div>
-        ) : (
-          <div className="mt-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2 px-4">文件夹</h3>
-            {folders.length === 0 ? (
-              <p className="px-4 py-2 text-gray-400 text-sm">暂无文件夹</p>
-            ) : (
-              folders.map(folder => (
-                <FolderItem key={folder.id} folder={folder} />
-              ))
-            )}
-          </div>
-        )}
       </div>
     </aside>
   );

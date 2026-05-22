@@ -1,126 +1,162 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { filesAPI } from '../api/files';
 
 export default function UploadModal({ isOpen, onClose, currentFolderId, onUploadSuccess }) {
-  const [dragActive, setDragActive] = useState(false);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
-  const fileInputRef = useRef(null);
+  const [progress, setProgress] = useState({});
+  const [errors, setErrors] = useState({});
+  const dropZoneRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFiles([]);
+      setProgress({});
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFiles(prev => [...prev, ...droppedFiles]);
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(prev => [...prev, ...selectedFiles]);
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    setUploading(true);
+    setErrors({});
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        await filesAPI.uploadFile(file, currentFolderId, (p) => {
+          setProgress(prev => ({ ...prev, [i]: p }));
+        });
+      } catch (err) {
+        setErrors(prev => ({ ...prev, [i]: err.response?.data?.detail || '上传失败' }));
+      }
+    }
+    
+    setUploading(false);
+    onUploadSuccess();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      await handleFiles(e.dataTransfer.files);
-    }
-  };
-
-  const handleFileSelect = async (e) => {
-    if (e.target.files && e.target.files[0]) {
-      await handleFiles(e.target.files);
-    }
-  };
-
-  const handleFiles = async (files) => {
-    setError('');
-    setUploading(true);
-    setProgress(0);
-
-    try {
-      for (let i = 0; i < files.length; i++) {
-        await filesAPI.uploadFile(files[i], currentFolderId, (percent) => {
-          setProgress(Math.round((percent * (i + 1)) / files.length));
-        });
-      }
-      onUploadSuccess();
-      onClose();
-    } catch (err) {
-      setError(err.response?.data?.detail || '上传失败，请重试');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex justify-between items-center px-6 py-4 border-b">
-          <h3 className="text-lg font-medium">上传文件</h3>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-canvas rounded-lg shadow-level-5 w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-hairline">
+          <h2 className="text-display-sm font-semibold text-ink">上传文件</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-mute hover:text-ink transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         <div className="p-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-              {error}
+          <div
+            ref={dropZoneRef}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              files.length > 0 ? 'border-hairline bg-canvas-soft' : 'border-hairline hover:border-primary'
+            }`}
+          >
+            <input
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-canvas-soft flex items-center justify-center">
+                <svg className="w-6 h-6 text-body" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <p className="text-body-md-strong text-ink mb-1">拖拽文件到这里上传</p>
+              <p className="text-body-sm text-body">或点击选择文件</p>
+            </label>
+          </div>
+
+          {files.length > 0 && (
+            <div className="mt-4 space-y-3 max-h-64 overflow-y-auto">
+              {files.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-canvas-soft rounded-md">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-3 text-body" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div>
+                      <p className="text-body-sm text-ink truncate max-w-xs">{file.name}</p>
+                      <p className="text-caption text-mute">{(file.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    {progress[index] !== undefined && (
+                      <div className="mr-3">
+                        <div className="w-24 h-1.5 bg-canvas rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300"
+                            style={{ width: `${progress[index]}%` }}
+                          />
+                        </div>
+                        <p className="text-caption text-mute mt-1">{progress[index]}%</p>
+                      </div>
+                    )}
+                    {errors[index] && (
+                      <p className="text-caption text-error mr-3">{errors[index]}</p>
+                    )}
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="text-mute hover:text-error transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center ${
-              dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            {uploading ? (
-              <div>
-                <div className="mb-2">上传中...</div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="mt-2 text-sm text-gray-500">{progress}%</div>
-              </div>
-            ) : (
-              <>
-                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-16l-4.586-4.586a2 2 0 00-2.828 0L20 28m8-12l4 4m0 0l4-4m-4 4v12" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p className="mt-4 text-gray-600">
-                  拖拽文件到这里，或
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-blue-600 hover:text-blue-700 ml-1"
-                  >
-                    选择文件
-                  </button>
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </>
-            )}
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="btn-secondary-sm"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleUpload}
+              disabled={uploading || files.length === 0}
+              className="btn-primary-sm disabled:opacity-50"
+            >
+              {uploading ? '上传中...' : '上传'}
+            </button>
           </div>
         </div>
       </div>

@@ -1,104 +1,101 @@
-import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import SearchBar from './SearchBar';
+import { useState } from 'react';
 
-export default function Navbar({ onUploadClick }) {
+export default function Navbar({ onUploadClick, onSearch }) {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLogout = async () => {
     await logout();
     window.location.href = '/login';
   };
 
-  return (
-    <nav className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center flex-1">
-            <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-blue-600">☁️ CloudFile</span>
-            </div>
-            
-            {/* 搜索框 */}
-            <div className="ml-8 flex-1 max-w-2xl">
-              <button
-                onClick={() => setShowSearch(!showSearch)}
-                className="w-full flex items-center px-4 py-2 bg-gray-100 rounded-lg text-gray-500 hover:bg-gray-200"
-              >
-                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span>搜索文件...</span>
-              </button>
-            </div>
-          </div>
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (onSearch && searchQuery.trim()) {
+      onSearch(searchQuery.trim());
+    }
+  };
 
-          <div className="flex items-center space-x-4">
+  return (
+    <nav className="bg-canvas border-b border-hairline sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center space-x-8">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-gradient-develop-start to-gradient-develop-end flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
+            <span className="text-display-sm font-semibold text-ink">CloudFile</span>
+          </div>
+        </div>
+
+        <div className="flex-1 max-w-md mx-8">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索文件..."
+              className="w-full bg-canvas-soft border border-hairline rounded-md px-4 py-2 text-sm text-ink placeholder:text-mute focus:outline-none focus:border-primary transition-colors"
+            />
             <button
-              onClick={onUploadClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              type="submit"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-mute hover:text-ink"
             >
-              上传
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onUploadClick}
+            className="btn-primary text-body-sm-strong h-9 px-4"
+          >
+            <svg className="w-4 h-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            上传
+          </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center text-body-sm-strong text-body hover:text-ink transition-colors px-3 py-2 rounded-full hover:bg-canvas-soft"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="hidden sm:inline">{user?.username}</span>
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center text-gray-700 hover:text-gray-900"
-              >
-                <span className="mr-2">{user?.username}</span>
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </button>
-
-              {showUserMenu && (
-                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                  <div className="py-1">
-                    <button
-                      onClick={() => window.location.href = '/profile'}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      个人设置
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      退出登录
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-canvas rounded-md shadow-level-5 py-2 z-50">
+                <a
+                  href="/profile"
+                  className="block px-4 py-2 text-body-sm text-body hover:text-ink hover:bg-canvas-soft"
+                >
+                  个人资料
+                </a>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-body-sm text-body hover:text-ink hover:bg-canvas-soft"
+                >
+                  退出登录
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* 搜索弹窗 */}
-      {showSearch && (
-        <div className="absolute left-0 right-0 bg-white border-b shadow-lg z-50">
-          <div className="max-w-3xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">搜索文件</h3>
-              <button
-                onClick={() => setShowSearch(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <SearchBar
-              onSearchResults={(results) => console.log('搜索结果:', results)}
-              onClose={() => setShowSearch(false)}
-            />
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

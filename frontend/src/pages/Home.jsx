@@ -17,8 +17,8 @@ export default function Home() {
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [breadcrumbPath, setBreadcrumbPath] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   
-  // 模态框状态
   const [showUpload, setShowUpload] = useState(false);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
@@ -29,16 +29,21 @@ export default function Home() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(false);
 
   useEffect(() => {
     loadFiles();
-  }, [currentFolderId]);
+  }, [currentFolderId, searchQuery]);
 
   const loadFiles = async () => {
     try {
       setLoading(true);
-      const response = await filesAPI.getFiles(currentFolderId);
+      let response;
+      if (searchQuery) {
+        response = await filesAPI.searchFiles(searchQuery);
+      } else {
+        response = await filesAPI.getFiles(currentFolderId);
+      }
       setFiles(response.files);
     } catch (err) {
       console.error('加载文件失败:', err);
@@ -49,11 +54,10 @@ export default function Home() {
 
   const handleFileClick = (file) => {
     if (file.is_folder) {
-      // 进入文件夹
       setBreadcrumbPath([...breadcrumbPath, file]);
       setCurrentFolderId(file.id);
+      setSearchQuery('');
     } else {
-      // 预览文件
       setPreviewFile(file);
       setShowPreview(true);
     }
@@ -65,18 +69,23 @@ export default function Home() {
   };
 
   const handleNavigate = (item) => {
+    setSearchQuery('');
     if (item === null) {
-      // 返回根目录
       setBreadcrumbPath([]);
       setCurrentFolderId(null);
     } else {
-      // 导航到指定文件夹
       const index = breadcrumbPath.findIndex(f => f.id === item.id);
       if (index !== -1) {
         setBreadcrumbPath(breadcrumbPath.slice(0, index + 1));
         setCurrentFolderId(item.id);
       }
     }
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setBreadcrumbPath([]);
+    setCurrentFolderId(null);
   };
 
   const handleContextMenu = (e, file) => {
@@ -108,61 +117,74 @@ export default function Home() {
     setSelectedFile(null);
   };
 
-  const handleActionSuccess = (message) => {
-    alert(message);
+  const handleActionSuccess = () => {
     loadFiles();
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar onUploadClick={() => setShowUpload(true)} />
+    <div className="min-h-screen bg-canvas-soft">
+      <Navbar onUploadClick={() => setShowUpload(true)} onSearch={handleSearch} />
 
-      {/* 侧边栏 */}
       <Sidebar
         onNavigate={handleNavigate}
         currentFolderId={currentFolderId}
       />
 
       <div className="ml-64">
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            {/* 工具栏 */}
-            <div className="flex justify-between items-center mb-6">
+        <main className="max-w-7xl mx-auto py-6 px-6">
+          <div className="mb-6">
+            <div className="flex justify-between items-center">
               <Breadcrumb path={breadcrumbPath} onNavigate={handleNavigate} />
-              <div className="flex space-x-4">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => setShowCreateFolder(true)}
-                  className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="flex items-center px-4 py-2 bg-canvas border border-hairline rounded-md text-body-sm-strong text-ink hover:bg-canvas-soft transition-colors"
                 >
-                  <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   新建文件夹
                 </button>
                 <button
                   onClick={() => setShowUpload(true)}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="btn-primary text-body-sm-strong h-9 px-4"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  <svg className="w-4 h-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   上传文件
                 </button>
               </div>
             </div>
-
-            {/* 文件列表 */}
-            <FileList
-              files={files}
-              onFileClick={handleFileClick}
-              onContextMenu={handleContextMenu}
-              loading={loading}
-            />
+            
+            {searchQuery && (
+              <div className="mt-4 flex items-center text-body-sm text-body">
+                <svg className="w-4 h-4 mr-2 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                搜索 "{searchQuery}" 的结果
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    loadFiles();
+                  }}
+                  className="ml-2 text-link hover:text-link-deep"
+                >
+                  清除
+                </button>
+              </div>
+            )}
           </div>
+
+          <FileList
+            files={files}
+            onFileClick={handleFileClick}
+            onContextMenu={handleContextMenu}
+            loading={loading}
+          />
         </main>
       </div>
 
-      {/* 模态框 */}
       <UploadModal
         isOpen={showUpload}
         onClose={() => setShowUpload(false)}

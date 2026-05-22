@@ -40,85 +40,98 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-center mb-6">注册 CloudFile</h1>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+    <div className="min-h-screen bg-canvas-soft flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-md bg-gradient-to-br from-gradient-develop-start to-gradient-develop-end flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
           </div>
-        )}
+          <h1 className="text-display-md font-semibold text-ink">CloudFile</h1>
+          <p className="text-body-sm text-body mt-2">创建您的私有云盘</p>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              用户名
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-              minLength={3}
-            />
+        <div className="card-marketing">
+          {error && (
+            <div className="bg-error-soft text-error-deep px-4 py-3 rounded-sm mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-body-sm-strong text-ink mb-2">用户名</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="form-input w-full"
+                placeholder="请输入用户名"
+                required
+                minLength={3}
+              />
+            </div>
+
+            <div>
+              <label className="block text-body-sm-strong text-ink mb-2">邮箱（可选）</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="form-input w-full"
+                placeholder="your@email.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-body-sm-strong text-ink mb-2">密码</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input w-full"
+                placeholder="请输入密码"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div>
+              <label className="block text-body-sm-strong text-ink mb-2">确认密码</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="form-input w-full"
+                placeholder="请再次输入密码"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full h-11 font-medium text-body-md-strong disabled:opacity-50"
+            >
+              {loading ? '注册中...' : '注册'}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-hairline">
+            <p className="text-center text-body-sm text-body">
+              已有账号？{' '}
+              <Link to="/login" className="text-link hover:text-link-deep font-medium">
+                登录
+              </Link>
+            </p>
           </div>
+        </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              邮箱
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              密码
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-              minLength={6}
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              确认密码
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-          >
-            {loading ? '注册中...' : '注册'}
-          </button>
-        </form>
-
-        <p className="text-center mt-4">
-          已有账号？{' '}
-          <Link to="/login" className="text-blue-600 hover:text-blue-700">
-            登录
-          </Link>
+        <p className="text-center text-caption text-mute mt-6">
+          注册即表示您同意我们的服务条款和隐私政策
         </p>
       </div>
     </div>
