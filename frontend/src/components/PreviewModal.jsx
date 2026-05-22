@@ -1,11 +1,18 @@
+import { useState, useEffect } from 'react';
 import { filesAPI } from '../api/files';
 
 export default function PreviewModal({ isOpen, onClose, file }) {
   if (!isOpen || !file) return null;
 
+  const [textContent, setTextContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const getPreviewUrl = () => {
+    const token = localStorage.getItem('access_token');
     const baseUrl = filesAPI.getPreviewUrl(file.id);
-    return baseUrl ? baseUrl : `/api/files/preview/${file.id}`;
+    const url = baseUrl ? baseUrl : `/api/files/preview/${file.id}`;
+    // 将 token 添加到 URL 参数中，因为 img/video/audio 标签不能携带 header
+    return `${url}?token=${token}`;
   };
 
   const getFileType = () => {
@@ -28,6 +35,33 @@ export default function PreviewModal({ isOpen, onClose, file }) {
 
   const fileType = getFileType();
   const previewUrl = getPreviewUrl();
+
+  useEffect(() => {
+    if (fileType === 'text') {
+      loadTextContent();
+    }
+  }, [file]);
+
+  const loadTextContent = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(previewUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        setTextContent(await response.text());
+      } else {
+        setTextContent('无法加载文件内容');
+      }
+    } catch (error) {
+      setTextContent('加载文件失败: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
@@ -87,10 +121,13 @@ export default function PreviewModal({ isOpen, onClose, file }) {
 
           {fileType === 'text' && (
             <div className="bg-gray-50 rounded-lg p-4 h-[60vh] overflow-auto">
-              <iframe
-                src={previewUrl}
-                className="w-full h-full border-none"
-              />
+              {loading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800">{textContent}</pre>
+              )}
             </div>
           )}
 

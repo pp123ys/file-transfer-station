@@ -9,7 +9,7 @@ from app.schemas.file import (
     FileUpdate, MessageResponse
 )
 from app.services.file import FileService
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user, get_user_from_token
 from app.utils.file import get_file_path
 import mimetypes
 
@@ -83,22 +83,28 @@ async def download_file(
 @router.get("/preview/{file_id}")
 async def preview_file(
     file_id: int,
-    current_user: User = Depends(get_current_user),
+    token: Optional[str] = Query(None, description="JWT token"),
     db: Session = Depends(get_db)
 ):
     """预览文件"""
-    file = FileService.get_file_by_id(db, file_id, current_user)
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    user = get_user_from_token(token, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    file = FileService.get_file_by_id(db, file_id, user)
     if not file:
         raise HTTPException(status_code=404, detail="文件不存在")
 
     if file.is_folder:
         raise HTTPException(status_code=400, detail="文件夹无法预览")
 
-    file_path = get_file_path(current_user.id, file.path)
+    file_path = get_file_path(user.id, file.path)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="文件不存在")
 
-    # 获取文件MIME类型
     mime_type, _ = mimetypes.guess_type(str(file_path))
     if mime_type is None:
         mime_type = "application/octet-stream"
