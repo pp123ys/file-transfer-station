@@ -57,7 +57,7 @@ class AuthService:
     def create_token(user: User) -> str:
         """为用户创建访问令牌"""
         access_token = create_access_token(
-            data={"sub": user.id, "username": user.username}
+            data={"sub": str(user.id), "username": user.username}
         )
         return access_token
     
