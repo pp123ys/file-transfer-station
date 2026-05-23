@@ -66,3 +66,75 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
 }
+
+/* Mobile utility classes */
+@layer utilities {
+  /* Touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .touch-none {
+    touch-action: none;
+  }
+  
+  /* Safe area insets */
+  .safe-p-t {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-p-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-p-l {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-p-r {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Mobile hide/show */
+  .hidden-mobile {
+    @apply hidden xs:hidden sm:hidden md:block;
+  }
+  
+  .hidden-tablet {
+    @apply hidden md:hidden lg:block;
+  }
+  
+  .hidden-desktop {
+    @apply block md:hidden;
+  }
+  
+  /* Mobile text sizing */
+  .text-mobile-xs {
+    @apply text-[10px] xs:text-[11px] sm:text-xs;
+  }
+  
+  .text-mobile-sm {
+    @apply text-xs xs:text-sm sm:text-sm;
+  }
+  
+  .text-mobile-base {
+    @apply text-sm xs:text-base sm:text-base;
+  }
+  
+  /* Mobile spacing */
+  .gap-mobile {
+    @apply gap-xs xs:gap-sm sm:gap-md;
+  }
+  
+  .p-mobile {
+    @apply p-xs xs:p-sm sm:p-md;
+  }
+  
+  .px-mobile {
+    @apply px-xs xs:px-sm sm:px-md;
+  }
+  
+  .py-mobile {
+    @apply py-xs xs:py-sm sm:py-md;
+  }
+}
