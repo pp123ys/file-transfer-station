@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import MobileDrawer from '../components/MobileDrawer';
+import { UploadFAB } from '../components/MobileFAB';
+import ActionSheet from '../components/ActionSheet';
 import FileList from '../components/FileList';
 import Breadcrumb from '../components/Breadcrumb';
 import UploadModal from '../components/UploadModal';
@@ -10,9 +13,11 @@ import FileActionModals from '../components/FileActionModals';
 import PreviewModal from '../components/PreviewModal';
 import { useAuth } from '../context/AuthContext';
 import { filesAPI } from '../api/files';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 export default function Home() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [files, setFiles] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [breadcrumbPath, setBreadcrumbPath] = useState([]);
@@ -32,6 +37,9 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewFile, setPreviewFile] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [actionSheetFile, setActionSheetFile] = useState(null);
 
   useEffect(() => {
     loadFiles();
@@ -149,6 +157,96 @@ export default function Home() {
     await filesAPI.downloadFile(file.id, file.name);
   };
 
+  const handleMobileContextMenu = (e, file) => {
+    if (isMobile) {
+      setActionSheetFile(file);
+      setShowActionSheet(true);
+    } else {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY, file });
+    }
+  };
+
+  const getActionSheetActions = () => {
+    if (!actionSheetFile) return [];
+    
+    const actions = [];
+    
+    if (!isTrashView) {
+      if (!actionSheetFile.is_folder) {
+        actions.push({
+          label: '预览',
+          icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          ),
+          onClick: () => handlePreview(actionSheetFile),
+        });
+        actions.push({
+          label: '下载',
+          icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          ),
+          onClick: () => handleDownload(actionSheetFile),
+        });
+      }
+      actions.push({
+        label: '重命名',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        ),
+        onClick: () => handleRename(actionSheetFile),
+      });
+      actions.push({
+        label: '移动到',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h6m6 10h6M3 7l6 6m0 0l6-6m-6 6V3m6 14l6-6m0 0l-6-6m6 6v12" />
+          </svg>
+        ),
+        onClick: () => handleMove(actionSheetFile),
+      });
+      actions.push({
+        label: '删除',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        ),
+        onClick: () => handleDelete(actionSheetFile),
+        destructive: true,
+      });
+    } else {
+      actions.push({
+        label: '恢复',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        ),
+        onClick: () => handleRestore(actionSheetFile),
+      });
+      actions.push({
+        label: '永久删除',
+        icon: (
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        ),
+        onClick: () => handleDelete(actionSheetFile),
+        destructive: true,
+      });
+    }
+    
+    return actions;
+  };
+
   const handleActionModalClose = (type) => {
     setActionModal({ ...actionModal, [`show${type.charAt(0).toUpperCase() + type.slice(1)}`]: false });
     setSelectedFile(null);
@@ -160,40 +258,48 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-canvas-soft">
-      <Navbar onUploadClick={() => setShowUpload(true)} onSearch={handleSearch} />
-
-      <Sidebar
-        onNavigate={handleNavigate}
-        currentFolderId={currentFolderId}
-        currentType={currentType}
-        isTrashView={isTrashView}
+      <Navbar 
+        onUploadClick={() => setShowUpload(true)} 
+        onSearch={handleSearch}
+        onMenuClick={() => setShowMobileDrawer(true)}
       />
 
-      <div className="ml-64">
-        <main className="max-w-7xl mx-auto py-6 px-6">
-          <div className="mb-6">
-            <div className="flex justify-between items-center">
+      {!isMobile && (
+        <Sidebar
+          onNavigate={handleNavigate}
+          currentFolderId={currentFolderId}
+          currentType={currentType}
+          isTrashView={isTrashView}
+        />
+      )}
+
+      <div className={`${isMobile ? '' : 'ml-64'}`}>
+        <main className={`${isMobile ? 'px-4 py-4' : 'max-w-7xl mx-auto py-6 px-6'}`}>
+          <div className="mb-4 tablet:mb-6">
+            <div className="flex flex-col mobile:flex-row justify-between items-start mobile:items-center gap-3">
               <Breadcrumb path={breadcrumbPath} onNavigate={handleNavigate} />
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowCreateFolder(true)}
-                  className="flex items-center px-4 py-2 bg-canvas border border-hairline rounded-md text-body-sm-strong text-ink hover:bg-canvas-soft transition-colors"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  新建文件夹
-                </button>
-                <button
-                  onClick={() => setShowUpload(true)}
-                  className="btn-primary text-body-sm-strong h-9 px-4"
-                >
-                  <svg className="w-4 h-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  上传文件
-                </button>
-              </div>
+              {!isMobile && (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowCreateFolder(true)}
+                    className="flex items-center px-4 py-2 bg-canvas border border-hairline rounded-md text-body-sm-strong text-ink hover:bg-canvas-soft transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    新建文件夹
+                  </button>
+                  <button
+                    onClick={() => setShowUpload(true)}
+                    className="btn-primary text-body-sm-strong h-9 px-4"
+                  >
+                    <svg className="w-4 h-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    上传文件
+                  </button>
+                </div>
+              )}
             </div>
             
             {searchQuery && (
@@ -218,12 +324,33 @@ export default function Home() {
           <FileList
             files={files}
             onFileClick={handleFileClick}
-            onContextMenu={handleContextMenu}
+            onContextMenu={handleMobileContextMenu}
             loading={loading}
             isTrashView={isTrashView}
           />
         </main>
       </div>
+
+      {isMobile && (
+        <UploadFAB onClick={() => setShowUpload(true)} />
+      )}
+
+      <MobileDrawer
+        isOpen={showMobileDrawer}
+        onClose={() => setShowMobileDrawer(false)}
+        onNavigate={handleNavigate}
+        currentFolderId={currentFolderId}
+        currentType={currentType}
+        isTrashView={isTrashView}
+        onSearch={handleSearch}
+      />
+
+      <ActionSheet
+        isOpen={showActionSheet}
+        onClose={() => setShowActionSheet(false)}
+        title={actionSheetFile?.name}
+        actions={getActionSheetActions()}
+      />
 
       <UploadModal
         isOpen={showUpload}
@@ -239,7 +366,7 @@ export default function Home() {
         onSuccess={loadFiles}
       />
 
-      {contextMenu && (
+      {contextMenu && !isMobile && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}

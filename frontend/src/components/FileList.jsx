@@ -1,7 +1,11 @@
 import FileItem from './FileItem';
+import MobileFileCard from './MobileFileCard';
 import Loading from './Loading';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 export default function FileList({ files, onFileClick, onContextMenu, loading, isTrashView = false }) {
+  const isMobile = useIsMobile();
+
   const formatSize = (bytes) => {
     if (bytes === 0) return '-';
     if (bytes < 1024) return bytes + ' B';
@@ -45,11 +49,27 @@ export default function FileList({ files, onFileClick, onContextMenu, loading, i
       <div className="bg-canvas-soft rounded-lg p-12 text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-canvas flex items-center justify-center">
           <svg className="w-8 h-8 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 0 00-2-2H6a2 0 00-2 2v12a2 0 002 2z" />
           </svg>
         </div>
         <h3 className="text-body-md-strong text-ink mb-2">暂无文件</h3>
         <p className="text-body-sm text-body">上传文件或创建文件夹开始使用</p>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        {files.map((file) => (
+          <MobileFileCard
+            key={file.id}
+            file={file}
+            onClick={() => onFileClick(file)}
+            onLongPress={(e) => onContextMenu(e, file)}
+            isTrashView={isTrashView}
+          />
+        ))}
       </div>
     );
   }
