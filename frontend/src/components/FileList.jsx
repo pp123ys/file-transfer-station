@@ -1,7 +1,7 @@
 import FileItem from './FileItem';
 import Loading from './Loading';
 
-export default function FileList({ files, onFileClick, onContextMenu, loading }) {
+export default function FileList({ files, onFileClick, onContextMenu, loading, isTrashView = false }) {
   const formatSize = (bytes) => {
     if (bytes === 0) return '-';
     if (bytes < 1024) return bytes + ' B';
@@ -62,7 +62,7 @@ export default function FileList({ files, onFileClick, onContextMenu, loading })
       <div className="hidden grid-cols-12 gap-4 px-6 py-3 border-b border-hairline text-caption-mono text-mute uppercase tracking-wider">
         <div className="col-span-5">名称</div>
         <div className="col-span-2 text-right">大小</div>
-        <div className="col-span-5 text-right">修改时间</div>
+        <div className="col-span-5 text-right">{isTrashView ? '删除时间' : '修改时间'}</div>
       </div>
       
       <div className="divide-y divide-hairline">
@@ -76,6 +76,7 @@ export default function FileList({ files, onFileClick, onContextMenu, loading })
                 onContextMenu={(e) => onContextMenu(e, folder)}
                 formatSize={formatSize}
                 formatDate={formatDate}
+                isTrashView={isTrashView}
               />
             ))}
           </div>
@@ -95,6 +96,7 @@ export default function FileList({ files, onFileClick, onContextMenu, loading })
             onContextMenu={(e) => onContextMenu(e, file)}
             formatSize={formatSize}
             formatDate={formatDate}
+            isTrashView={isTrashView}
           />
         ))}
       </div>

@@ -2,9 +2,33 @@ import api from './index';
 
 export const filesAPI = {
   // 获取文件列表
-  getFiles: async (parentId = null) => {
-    const params = parentId !== null ? { parent_id: parentId } : {};
+  getFiles: async (parentId = null, fileType = null) => {
+    const params = {};
+    if (parentId !== null) {
+      params.parent_id = parentId;
+    }
+    if (fileType) {
+      params.file_type = fileType;
+    }
     const response = await api.get('/api/files', { params });
+    return response.data;
+  },
+
+  // 获取回收站文件
+  getTrashFiles: async () => {
+    const response = await api.get('/api/files/trash');
+    return response.data;
+  },
+
+  // 恢复文件
+  restoreFile: async (fileId) => {
+    const response = await api.post(`/api/files/${fileId}/restore`);
+    return response.data;
+  },
+
+  // 永久删除文件
+  permanentDeleteFile: async (fileId) => {
+    const response = await api.delete(`/api/files/${fileId}/permanent`);
     return response.data;
   },
 

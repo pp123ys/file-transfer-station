@@ -1,4 +1,4 @@
-export default function FileItem({ file, onClick, onContextMenu, formatSize, formatDate }) {
+export default function FileItem({ file, onClick, onContextMenu, formatSize, formatDate, isTrashView = false }) {
   const getFileIcon = (name) => {
     const ext = name.split('.').pop().toLowerCase();
     const icons = {
@@ -110,7 +110,7 @@ export default function FileItem({ file, onClick, onContextMenu, formatSize, for
         {formatSize(file.size)}
       </div>
       <div className="col-span-5 text-right text-body-sm text-body">
-        {formatDate(file.updated_at || file.created_at)}
+        {isTrashView ? (file.deleted_at ? formatDate(file.deleted_at) : '-') : formatDate(file.updated_at || file.created_at)}
       </div>
     </div>
   );

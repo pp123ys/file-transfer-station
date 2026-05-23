@@ -12,16 +12,92 @@ class FileService:
     """文件服务"""
     
     @staticmethod
-    def get_files(db: Session, user: User, parent_id: Optional[int] = None) -> List[File]:
-        """获取文件列表"""
-        query = db.query(File).filter(File.user_id == user.id)
+    def get_files(db: Session, user: User, parent_id: Optional[int] = None, file_type: Optional[str] = None) -> List[File]:
+        """获取文件列表（排除已删除的文件）"""
+        query = db.query(File).filter(
+            File.user_id == user.id,
+            File.is_deleted == False
+        )
         
         if parent_id is None:
             query = query.filter(File.parent_id == None)
         else:
             query = query.filter(File.parent_id == parent_id)
         
+        if file_type:
+            if file_type == 'documents':
+                query = query.filter(
+                    File.name.ilike('%.doc') | File.name.ilike('%.docx') | 
+                    File.name.ilike('%.pdf') | File.name.ilike('%.txt') |
+                    File.name.ilike('%.xlsx') | File.name.ilike('%.xls') |
+                    File.name.ilike('%.ppt') | File.name.ilike('%.pptx')
+                )
+            elif file_type == 'images':
+                query = query.filter(
+                    File.name.ilike('%.jpg') | File.name.ilike('%.jpeg') | 
+                    File.name.ilike('%.png') | File.name.ilike('%.gif') |
+                    File.name.ilike('%.bmp') | File.name.ilike('%.svg')
+                )
+            elif file_type == 'videos':
+                query = query.filter(
+                    File.name.ilike('%.mp4') | File.name.ilike('%.avi') | 
+                    File.name.ilike('%.mkv') | File.name.ilike('%.mov') |
+                    File.name.ilike('%.wmv')
+                )
+            elif file_type == 'downloads':
+                query = query.filter(
+                    File.name.ilike('%.zip') | File.name.ilike('%.rar') | 
+                    File.name.ilike('%.7z') | File.name.ilike('%.exe') |
+                    File.name.ilike('%.msi')
+                )
+        
         return query.order_by(File.is_folder.desc(), File.name).all()
+    
+    @staticmethod
+    def get_trash_files(db: Session, user: User) -> List[File]:
+        """获取回收站文件"""
+        return db.query(File).filter(
+            File.user_id == user.id,
+            File.is_deleted == True
+        ).order_by(File.deleted_at.desc()).all()
+    
+    @staticmethod
+    def restore_file(db: Session, user: User, file_id: int) -> File:
+        """恢复文件"""
+        file = FileService.get_file_by_id(db, file_id, user)
+        if not file:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="文件不存在"
+            )
+        
+        if not file.is_deleted:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="文件未被删除"
+            )
+        
+        FileService._restore_file_recursive(db, file)
+        db.commit()
+        db.refresh(file)
+        
+        return file
+    
+    @staticmethod
+    def _restore_file_recursive(db: Session, file: File) -> None:
+        """递归恢复文件及其子文件"""
+        file.is_deleted = False
+        file.deleted_at = None
+        file.updated_at = datetime.utcnow()
+        
+        if file.is_folder:
+            children = db.query(File).filter(
+                File.parent_id == file.id,
+                File.is_deleted == True
+            ).all()
+            
+            for child in children:
+                FileService._restore_file_recursive(db, child)
     
     @staticmethod
     def get_file_by_id(db: Session, file_id: int, user: User) -> Optional[File]:
@@ -149,8 +225,8 @@ class FileService:
         return file
     
     @staticmethod
-    def delete_file(db: Session, user: User, file_id: int) -> None:
-        """删除文件或文件夹"""
+    def delete_file(db: Session, user: User, file_id: int, permanent: bool = False) -> None:
+        """删除文件或文件夹（软删除，除非 permanent=True）"""
         file = FileService.get_file_by_id(db, file_id, user)
         if not file:
             raise HTTPException(
@@ -158,23 +234,45 @@ class FileService:
                 detail="文件不存在"
             )
         
-        # 如果是文件夹，递归删除所有子文件
-        if file.is_folder:
-            FileService._delete_folder_recursive(db, file)
+        if permanent:
+            if file.is_folder:
+                FileService._delete_folder_recursive(db, file)
+            else:
+                if file.path:
+                    delete_physical_file(file.path, user.id)
+            db.delete(file)
         else:
-            # 删除物理文件
-            if file.path:
-                delete_physical_file(file.path, user.id)
+            file.is_deleted = True
+            file.deleted_at = datetime.utcnow()
+            file.updated_at = datetime.utcnow()
+            db.flush()
+            if file.is_folder:
+                FileService._soft_delete_folder_recursive(db, file)
         
-        # 删除文件记录
-        db.delete(file)
         db.commit()
+    
+    @staticmethod
+    def _soft_delete_folder_recursive(db: Session, folder: File) -> None:
+        """递归软删除文件夹及其内容"""
+        children = db.query(File).filter(
+            File.parent_id == folder.id,
+            File.is_deleted == False
+        ).all()
+        
+        for child in children:
+            child.is_deleted = True
+            child.deleted_at = datetime.utcnow()
+            child.updated_at = datetime.utcnow()
+            if child.is_folder:
+                FileService._soft_delete_folder_recursive(db, child)
     
     @staticmethod
     def _delete_folder_recursive(db: Session, folder: File) -> None:
         """递归删除文件夹及其内容"""
-        # 获取所有子文件
-        children = db.query(File).filter(File.parent_id == folder.id).all()
+        children = db.query(File).filter(
+            File.parent_id == folder.id,
+            File.is_deleted == False
+        ).all()
         
         for child in children:
             if child.is_folder:

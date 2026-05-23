@@ -1,13 +1,17 @@
 import os
 
-# 数据库配置 - MySQL
+# 数据库配置 - MySQL（强烈建议使用环境变量）
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "mysql+pymysql://root:123456@localhost:3306/filemanager"
+    "mysql+pymysql://root@localhost:3306/filemanager"
 )
+# 如果需要密码，请设置环境变量 DATABASE_PASSWORD
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "")
 
 # JWT配置
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable must be set")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
@@ -21,4 +25,4 @@ ALLOWED_EXTENSIONS = [
 ]
 
 # 调试模式
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"

@@ -1,10 +1,9 @@
-export default function Sidebar({ onNavigate, currentFolderId }) {
+export default function Sidebar({ onNavigate, currentFolderId, currentType, isTrashView }) {
   const menuItems = [
     { id: 'all', label: '全部文件', icon: 'folder' },
     { id: 'documents', label: '文档', icon: 'file-text' },
     { id: 'images', label: '图片', icon: 'image' },
     { id: 'videos', label: '视频', icon: 'video' },
-    { id: 'downloads', label: '下载', icon: 'download' },
     { id: 'trash', label: '回收站', icon: 'trash' },
   ];
 
@@ -55,7 +54,7 @@ export default function Sidebar({ onNavigate, currentFolderId }) {
               key={item.id}
               onClick={() => onNavigate(item)}
               className={`w-full flex items-center px-3 py-2 rounded-md text-body-sm transition-all duration-200 ${
-                item.id === 'all' && !currentFolderId
+                (item.id === 'all' && !currentFolderId && !currentType && !isTrashView) || (item.id === 'trash' && isTrashView) || (item.id !== 'all' && item.id !== 'trash' && currentType === item.id)
                   ? 'bg-canvas-soft text-ink font-medium'
                   : 'text-body hover:text-ink hover:bg-canvas-soft'
               }`}

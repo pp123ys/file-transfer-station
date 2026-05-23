@@ -1,33 +1,13 @@
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-.env
-.env.local
-.venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
+.venv
 
 # IDE
 .vscode/
@@ -36,32 +16,44 @@ venv.bak/
 *.swo
 *~
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-dist/
-dist-ssr/
-*.local
-.DS_Store
+# 环境变量文件
+.env
+.env.local
+.env.*.local
 
-# Storage
-storage/
+# 日志
 *.log
+logs/
 
-# Database
+# 编译文件
+*.pyc
+*.pyo
+*.pyd
+
+# 数据库
 *.db
 *.sqlite
 *.sqlite3
 
-# Environment variables
-.env
-.env.*
-!.env.example
+# 操作系统
+.DS_Store
+Thumbs.db
 
-# Build outputs
-*.pyc
-*.pyo
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# 包管理
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 测试覆盖率
+coverage/
+htmlcov/
+
+# 临时文件
+*.tmp
+.cache/

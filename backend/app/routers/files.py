@@ -18,11 +18,12 @@ router = APIRouter(prefix="/api/files", tags=["文件"])
 @router.get("", response_model=FileListResponse)
 async def get_files(
     parent_id: Optional[int] = Query(None, description="父文件夹ID，null表示根目录"),
+    file_type: Optional[str] = Query(None, description="文件类型筛选: documents, images, videos, downloads"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取文件列表"""
-    files = FileService.get_files(db, current_user, parent_id)
+    files = FileService.get_files(db, current_user, parent_id, file_type)
     return FileListResponse(files=[
         FileSchema.model_validate(f) for f in files
     ])
@@ -83,25 +84,18 @@ async def download_file(
 @router.get("/preview/{file_id}")
 async def preview_file(
     file_id: int,
-    token: Optional[str] = Query(None, description="JWT token"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """预览文件"""
-    if not token:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    user = get_user_from_token(token, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    file = FileService.get_file_by_id(db, file_id, user)
+    file = FileService.get_file_by_id(db, file_id, current_user)
     if not file:
         raise HTTPException(status_code=404, detail="文件不存在")
 
     if file.is_folder:
         raise HTTPException(status_code=400, detail="文件夹无法预览")
 
-    file_path = get_file_path(user.id, file.path)
+    file_path = get_file_path(current_user.id, file.path)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="文件不存在")
 
@@ -135,6 +129,37 @@ async def delete_file(
     """删除文件或文件夹"""
     FileService.delete_file(db, current_user, file_id)
     return MessageResponse(message="删除成功")
+
+@router.get("/trash", response_model=FileListResponse)
+async def get_trash_files(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取回收站文件"""
+    files = FileService.get_trash_files(db, current_user)
+    return FileListResponse(files=[
+        FileSchema.model_validate(f) for f in files
+    ])
+
+@router.post("/{file_id}/restore", response_model=FileSchema)
+async def restore_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """恢复文件"""
+    file = FileService.restore_file(db, current_user, file_id)
+    return FileSchema.model_validate(file)
+
+@router.delete("/{file_id}/permanent", response_model=MessageResponse)
+async def permanent_delete_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """永久删除文件"""
+    FileService.delete_file(db, current_user, file_id, permanent=True)
+    return MessageResponse(message="永久删除成功")
 
 @router.get("/search", response_model=FileListResponse)
 async def search_files(

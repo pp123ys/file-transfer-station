@@ -8,8 +8,7 @@ export default function PreviewModal({ isOpen, onClose, file }) {
   useEffect(() => {
     if (isOpen && file) {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      setPreviewUrl(`${filesAPI.getPreviewUrl(file.id)}?token=${token}`);
+      setPreviewUrl(filesAPI.getPreviewUrl(file.id));
       setLoading(false);
     }
   }, [isOpen, file]);

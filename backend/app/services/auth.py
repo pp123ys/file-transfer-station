@@ -19,9 +19,14 @@ class AuthService:
                 detail="用户名已存在"
             )
         
+        # 处理邮箱（空字符串转换为 NULL）
+        email = user_data.email.strip() if user_data.email else None
+        if not email:
+            email = None
+        
         # 检查邮箱是否存在
-        if user_data.email:
-            existing_email = db.query(User).filter(User.email == user_data.email).first()
+        if email:
+            existing_email = db.query(User).filter(User.email == email).first()
             if existing_email:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -32,7 +37,7 @@ class AuthService:
         hashed_password = get_password_hash(user_data.password)
         db_user = User(
             username=user_data.username,
-            email=user_data.email,
+            email=email,
             password_hash=hashed_password
         )
         db.add(db_user)

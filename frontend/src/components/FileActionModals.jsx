@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { filesAPI } from '../api/files';
 
-export default function FileActionModals({ showRename, showDelete, showMove, file, folders, onClose, onSuccess }) {
+export default function FileActionModals({ showRename, showDelete, showMove, file, folders, onClose, onSuccess, isPermanent = false }) {
   const [newName, setNewName] = useState('');
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,11 @@ export default function FileActionModals({ showRename, showDelete, showMove, fil
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await filesAPI.deleteFile(file.id);
+      if (isPermanent) {
+        await filesAPI.permanentDeleteFile(file.id);
+      } else {
+        await filesAPI.deleteFile(file.id);
+      }
       onSuccess();
       onClose('delete');
     } catch (err) {
@@ -127,9 +131,9 @@ export default function FileActionModals({ showRename, showDelete, showMove, fil
                 </svg>
               </div>
               <div>
-                <p className="text-body-md-strong text-ink">确认删除?</p>
+                <p className="text-body-md-strong text-ink">确认{isPermanent ? '永久删除' : '删除'}?</p>
                 <p className="text-body-sm text-body mt-1">
-                  {file.is_folder ? '此操作将删除该文件夹及其所有内容。' : '此操作无法撤销。'}
+                  {isPermanent ? '此操作将永久删除文件，无法恢复。' : (file.is_folder ? '此操作将删除该文件夹及其所有内容。' : '此操作无法撤销。')}
                 </p>
                 <p className="text-body-sm text-mute mt-2">" {file.name} "</p>
               </div>
@@ -138,7 +142,7 @@ export default function FileActionModals({ showRename, showDelete, showMove, fil
             <div className="mt-6 flex justify-end space-x-3">
               <button onClick={() => handleClose('delete')} className="btn-secondary-sm">取消</button>
               <button onClick={handleDelete} disabled={loading} className="btn-primary-sm disabled:opacity-50 bg-error hover:bg-error-deep">
-                {loading ? '删除中...' : '删除'}
+                {loading ? '删除中...' : isPermanent ? '永久删除' : '删除'}
               </button>
             </div>
           </div>

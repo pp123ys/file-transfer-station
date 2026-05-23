@@ -18,6 +18,8 @@ export default function Home() {
   const [breadcrumbPath, setBreadcrumbPath] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentType, setCurrentType] = useState(null);
+  const [isTrashView, setIsTrashView] = useState(false);
   
   const [showUpload, setShowUpload] = useState(false);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
@@ -33,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     loadFiles();
-  }, [currentFolderId, searchQuery]);
+  }, [currentFolderId, searchQuery, currentType, isTrashView]);
 
   const loadFiles = async () => {
     try {
@@ -41,8 +43,10 @@ export default function Home() {
       let response;
       if (searchQuery) {
         response = await filesAPI.searchFiles(searchQuery);
+      } else if (isTrashView) {
+        response = await filesAPI.getTrashFiles();
       } else {
-        response = await filesAPI.getFiles(currentFolderId);
+        response = await filesAPI.getFiles(currentFolderId, currentType);
       }
       setFiles(response.files);
     } catch (err) {
@@ -53,6 +57,10 @@ export default function Home() {
   };
 
   const handleFileClick = (file) => {
+    if (isTrashView) {
+      return;
+    }
+    
     if (file.is_folder) {
       setBreadcrumbPath([...breadcrumbPath, file]);
       setCurrentFolderId(file.id);
@@ -64,6 +72,9 @@ export default function Home() {
   };
 
   const handlePreview = (file) => {
+    if (isTrashView) {
+      return;
+    }
     setPreviewFile(file);
     setShowPreview(true);
   };
@@ -73,6 +84,18 @@ export default function Home() {
     if (item === null || item.id === 'all') {
       setBreadcrumbPath([]);
       setCurrentFolderId(null);
+      setCurrentType(null);
+      setIsTrashView(false);
+    } else if (item.id === 'documents' || item.id === 'images' || item.id === 'videos' || item.id === 'downloads') {
+      setBreadcrumbPath([]);
+      setCurrentFolderId(null);
+      setCurrentType(item.id);
+      setIsTrashView(false);
+    } else if (item.id === 'trash') {
+      setBreadcrumbPath([]);
+      setCurrentFolderId(null);
+      setCurrentType(null);
+      setIsTrashView(true);
     } else {
       const index = breadcrumbPath.findIndex(f => f.id === item.id);
       if (index !== -1) {
@@ -82,6 +105,8 @@ export default function Home() {
         setBreadcrumbPath([]);
         setCurrentFolderId(null);
       }
+      setCurrentType(null);
+      setIsTrashView(false);
     }
   };
 
@@ -103,7 +128,16 @@ export default function Home() {
 
   const handleDelete = (file) => {
     setSelectedFile(file);
-    setActionModal({ ...actionModal, showDelete: true });
+    setActionModal({ ...actionModal, showDelete: true, isPermanent: isTrashView });
+  };
+
+  const handleRestore = async (file) => {
+    try {
+      await filesAPI.restoreFile(file.id);
+      await loadFiles();
+    } catch (err) {
+      console.error('恢复文件失败:', err);
+    }
   };
 
   const handleMove = (file) => {
@@ -131,6 +165,8 @@ export default function Home() {
       <Sidebar
         onNavigate={handleNavigate}
         currentFolderId={currentFolderId}
+        currentType={currentType}
+        isTrashView={isTrashView}
       />
 
       <div className="ml-64">
@@ -184,6 +220,7 @@ export default function Home() {
             onFileClick={handleFileClick}
             onContextMenu={handleContextMenu}
             loading={loading}
+            isTrashView={isTrashView}
           />
         </main>
       </div>
@@ -213,6 +250,8 @@ export default function Home() {
           onRename={handleRename}
           onDelete={handleDelete}
           onMove={handleMove}
+          onRestore={handleRestore}
+          isTrashView={isTrashView}
         />
       )}
 
@@ -224,6 +263,7 @@ export default function Home() {
         folders={files}
         onClose={handleActionModalClose}
         onSuccess={handleActionSuccess}
+        isPermanent={actionModal.isPermanent}
       />
 
       <PreviewModal

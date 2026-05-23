@@ -13,6 +13,8 @@ class File(Base):
     is_folder = Column(Boolean, default=False)
     size = Column(BigInteger, default=0)
     parent_id = Column(Integer, ForeignKey("files.id"), nullable=True, index=True)
+    is_deleted = Column(Boolean, default=False, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

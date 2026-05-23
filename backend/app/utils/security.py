@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-import hashlib
-import hmac
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -10,23 +9,23 @@ from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_DAYS
 from app.database import get_db
 from app.models.user import User
 
-# 使用 SHA-256 作为密码哈希（简单且兼容性好）
+# 使用 bcrypt 作为密码哈希
 security = HTTPBearer()
-
-def _hash_password_sha256(password: str, salt: str = SECRET_KEY) -> str:
-    """使用 SHA-256 哈希密码"""
-    password_bytes = password.encode('utf-8')
-    salt_bytes = salt.encode('utf-8')
-    hashed = hmac.new(salt_bytes, password_bytes, hashlib.sha256)
-    return hashed.hexdigest()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """验证密码"""
-    return hmac.compare_digest(_hash_password_sha256(plain_password), hashed_password)
+    # bcrypt 限制密码长度为 72 字节，过长的密码需要截断
+    truncated_password = plain_password[:72].encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(truncated_password, hashed_bytes)
 
 def get_password_hash(password: str) -> str:
     """哈希密码"""
-    return _hash_password_sha256(password)
+    # bcrypt 限制密码长度为 72 字节，过长的密码需要截断
+    truncated_password = password[:72].encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(truncated_password, salt)
+    return hashed.decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """创建JWT Token"""
