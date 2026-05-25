@@ -1,10 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AdminAuthProvider } from './admin/context/AdminAuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import AdminLayout from './admin/layouts/AdminLayout';
+import AdminLogin from './admin/pages/Login';
+import Dashboard from './admin/pages/Dashboard';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -38,42 +42,48 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <AdminAuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <PublicRoute>
+                    <Register />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AdminAuthProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
