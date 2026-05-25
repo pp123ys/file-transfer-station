@@ -8,7 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.database import engine
 from app.models import user, file
-from app.routers import auth, files, admin_auth, admin_users, admin_files, admin_dashboard, admin_settings
+from app.routers import auth, files, admin_auth, admin_users, admin_files, admin_dashboard, admin_settings, admin_audit_logs
 from app.utils.rate_limit import get_limiter
 
 # Create tables
@@ -43,6 +43,7 @@ app.include_router(admin_users.router)
 app.include_router(admin_files.router)
 app.include_router(admin_dashboard.router)
 app.include_router(admin_settings.router)
+app.include_router(admin_audit_logs.router)
 
 @app.get("/")
 async def root():
