@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api/auth';
+import { filesAPI } from '../api/files';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -8,6 +9,29 @@ export default function Profile() {
   const [email, setEmail] = useState(user?.email || '');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [storage, setStorage] = useState(null);
+
+  useEffect(() => {
+    loadStorage();
+  }, []);
+
+  const loadStorage = async () => {
+    try {
+      const data = await filesAPI.getStorageInfo();
+      setStorage(data);
+    } catch (err) {
+      console.error('加载存储信息失败:', err);
+    }
+  };
+
+  const formatBytes = (bytes, decimals = 1) => {
+    if (bytes === 0) return '0 MB';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -156,14 +180,19 @@ export default function Profile() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">已使用</span>
-              <span className="font-medium">0 MB</span>
+              <span className="font-medium">{storage ? formatBytes(storage.used) : '0 MB'}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{ 
+                  width: storage ? `${Math.min(100, (storage.used / storage.total) * 100)}%` : '0%' 
+                }}
+              ></div>
             </div>
             <div className="flex justify-between text-xs text-gray-500">
-              <span>0 MB</span>
-              <span>可用 100 GB</span>
+              <span>{storage ? formatBytes(storage.used) : '0 MB'}</span>
+              <span>可用 {storage ? formatBytes(storage.available) : '0 MB'}</span>
             </div>
           </div>
         </div>

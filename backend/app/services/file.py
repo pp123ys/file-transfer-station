@@ -281,6 +281,24 @@ class FileService:
         
         db.delete(folder)
     
+
+    @staticmethod
+    def get_storage_usage(db: Session, user: User) -> dict:
+        """获取用户存储使用情况（不含软删除文件）"""
+        from app.config import STORAGE_QUOTA_BYTES
+        from sqlalchemy import func
+
+        result = db.query(func.coalesce(func.sum(File.size), 0)).filter(
+            File.user_id == user.id,
+            File.is_deleted == False
+        ).scalar()
+
+        used = int(result)
+        total = STORAGE_QUOTA_BYTES
+        available = max(0, total - used)
+
+        return {"used": used, "total": total, "available": available}
+
     @staticmethod
     def search_files(db: Session, user: User, keyword: str, skip: int = 0, limit: int = 50) -> Tuple[List[File], int]:
         """搜索文件，返回 (files, total)"""

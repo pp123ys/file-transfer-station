@@ -17,7 +17,8 @@ export default function MobileDrawer({
   currentFolderId, 
   currentType, 
   isTrashView,
-  onSearch 
+  onSearch,
+  storage
 }) {
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
@@ -242,6 +243,26 @@ export default function MobileDrawer({
               </div>
             </motion.div>
 
+            {storage && (
+              <div className="border-t border-hairline px-4 py-3 mt-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-caption-mono text-mute uppercase tracking-wider">存储空间</span>
+                  <span className="text-caption-mono text-mute">{Math.round(storage.used / storage.total * 100)}%</span>
+                </div>
+                <div className="w-full h-1 rounded-sm bg-hairline overflow-hidden">
+                  <div
+                    className={`h-full rounded-sm transition-all duration-300 ${
+                      storage.used / storage.total > 0.95 ? 'bg-error' :
+                      storage.used / storage.total > 0.8 ? 'bg-warning' : 'bg-ink'
+                    }`}
+                    style={{ width: `${Math.min(100, storage.used / storage.total * 100)}%` }}
+                  />
+                </div>
+                <p className="text-body-sm text-body mt-1">
+                  {(storage.used / (1024 ** 3)).toFixed(1)} GB / {(storage.total / (1024 ** 3)).toFixed(1)} GB
+                </p>
+              </div>
+            )}
             {/* User Profile */}
             <motion.div 
               className="border-t border-hairline p-md"

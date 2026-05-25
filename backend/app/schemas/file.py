@@ -41,3 +41,9 @@ class FileUpdate(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class StorageInfo(BaseModel):
+    used: int
+    total: int
+    available: int

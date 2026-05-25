@@ -1,4 +1,4 @@
-export default function Sidebar({ onNavigate, currentFolderId, currentType, isTrashView }) {
+export default function Sidebar({ onNavigate, currentFolderId, currentType, isTrashView, storage }) {
   const menuItems = [
     { id: 'all', label: '全部文件', icon: 'folder' },
     { id: 'documents', label: '文档', icon: 'file-text' },
@@ -46,7 +46,7 @@ export default function Sidebar({ onNavigate, currentFolderId, currentType, isTr
 
   return (
     <aside className="w-64 bg-canvas border-r border-hairline fixed left-0 top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-      <div className="p-4">
+      <div className="p-4 pb-20">
         <h2 className="text-caption-mono text-mute uppercase tracking-wider mb-3">快速访问</h2>
         <nav className="space-y-1">
           {menuItems.map((item) => (
@@ -84,6 +84,28 @@ export default function Sidebar({ onNavigate, currentFolderId, currentType, isTr
           </nav>
         </div>
       </div>
-    </aside>
+    
+        {storage && (
+          <div className="absolute bottom-0 left-0 right-0 border-t border-hairline bg-canvas px-4 py-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-caption-mono text-mute uppercase tracking-wider">存储空间</span>
+              <span className="text-caption-mono text-mute">{Math.round(storage.used / storage.total * 100)}%</span>
+            </div>
+            <div className="w-full h-1 rounded-sm bg-hairline overflow-hidden">
+              <div
+                className={`h-full rounded-sm transition-all duration-300 ${
+                  storage.used / storage.total > 0.95 ? 'bg-error' :
+                  storage.used / storage.total > 0.8 ? 'bg-warning' : 'bg-ink'
+                }`}
+                style={{ width: `${Math.min(100, storage.used / storage.total * 100)}%` }}
+              />
+            </div>
+            <p className="text-body-sm text-body mt-1">
+              {(storage.used / (1024 ** 3)).toFixed(1)} GB / {(storage.total / (1024 ** 3)).toFixed(1)} GB
+            </p>
+          </div>
+        )}
+
+</aside>
   );
 }

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { filesAPI } from '../api/files';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
-export default function UploadModal({ isOpen, onClose, currentFolderId, onUploadSuccess }) {
+export default function UploadModal({ isOpen, onClose, currentFolderId, onUploadSuccess, storage }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
@@ -96,6 +96,16 @@ export default function UploadModal({ isOpen, onClose, currentFolderId, onUpload
       </div>
 
       <div className="p-5 flex-1 overflow-y-auto">
+        {storage && (
+          <div className={`mb-2 text-body-sm ${storage.available === 0 ? 'text-error' : 'text-mute'}`}>
+            {storage.available === 0
+              ? '存储空间已用完'
+              : `可用空间：${storage.available > 1073741824
+                  ? (storage.available / 1073741824).toFixed(1) + ' GB'
+                  : (storage.available / 1048576).toFixed(0) + ' MB'}`
+            }
+          </div>
+        )}
         <div
           ref={dropZoneRef}
           onDragOver={handleDragOver}
@@ -200,6 +210,16 @@ export default function UploadModal({ isOpen, onClose, currentFolderId, onUpload
       </div>
 
       <div className="p-6">
+        {storage && (
+          <div className={`mb-2 text-body-sm ${storage.available === 0 ? 'text-error' : 'text-mute'}`}>
+            {storage.available === 0
+              ? '存储空间已用完'
+              : `可用空间：${storage.available > 1073741824
+                  ? (storage.available / 1073741824).toFixed(1) + ' GB'
+                  : (storage.available / 1048576).toFixed(0) + ' MB'}`
+            }
+          </div>
+        )}
         <div
           ref={dropZoneRef}
           onDragOver={handleDragOver}

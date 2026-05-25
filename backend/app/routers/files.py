@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.file import (
     FileResponse as FileSchema, FileListResponse, FolderCreate,
-    FileUpdate, MessageResponse, FileType
+    FileUpdate, MessageResponse, FileType, StorageInfo
 )
 from app.services.file import FileService
 from app.utils.security import get_current_user, get_user_from_token
@@ -57,6 +57,16 @@ async def upload_file(
             pass
     
     uploaded_file = await FileService.upload_file(db, current_user, file, parent_id_int)
+    
+    # 检查存储配额：上传后若超出则回滚
+    storage = FileService.get_storage_usage(db, current_user)
+    if storage["used"] > storage["total"]:
+        FileService.delete_file(db, current_user, uploaded_file.id, permanent=True)
+        raise HTTPException(
+            status_code=413,
+            detail=f"存储空间不足。已用 {storage['used'] / 1073741824:.1f} GB（含待上传文件）超出配额 {storage['total'] / 1073741824:.1f} GB"
+        )
+
     return FileSchema.model_validate(uploaded_file)
 
 @router.get("/download/{file_id}")
@@ -165,6 +175,16 @@ async def permanent_delete_file(
     """永久删除文件"""
     FileService.delete_file(db, current_user, file_id, permanent=True)
     return MessageResponse(message="永久删除成功")
+
+
+
+@router.get("/storage", response_model=StorageInfo)
+async def get_storage(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户存储使用情况"""
+    return FileService.get_storage_usage(db, current_user)
 
 @router.get("/search", response_model=FileListResponse)
 async def search_files(

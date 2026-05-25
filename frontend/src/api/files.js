@@ -1,4 +1,4 @@
-import api from './index';
+﻿import api from './index';
 
 export const filesAPI = {
   // 获取文件列表
@@ -97,6 +97,11 @@ export const filesAPI = {
     const response = await api.get('/api/files/search', {
       params: { q: keyword }
     });
+    return response.data;
+  },
+  // 获取存储使用情况
+  getStorageInfo: async () => {
+    const response = await api.get('/api/files/storage');
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 # 数据库配置 - MySQL（强烈建议使用环境变量）
 DATABASE_URL = os.getenv(
@@ -26,3 +26,7 @@ ALLOWED_EXTENSIONS = [
 
 # 调试模式
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+# 存储配额配置
+STORAGE_QUOTA_GB = int(os.getenv("STORAGE_QUOTA_GB", "2"))
+STORAGE_QUOTA_BYTES = STORAGE_QUOTA_GB * 1024 * 1024 * 1024

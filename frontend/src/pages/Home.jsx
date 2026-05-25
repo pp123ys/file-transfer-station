@@ -40,9 +40,11 @@ export default function Home() {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [actionSheetFile, setActionSheetFile] = useState(null);
+  const [storage, setStorage] = useState(null);
 
   useEffect(() => {
     loadFiles();
+    loadStorage();
   }, [currentFolderId, searchQuery, currentType, isTrashView]);
 
   const loadFiles = async () => {
@@ -61,6 +63,15 @@ export default function Home() {
       console.error('加载文件失败:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStorage = async () => {
+    try {
+      const data = await filesAPI.getStorageInfo();
+      setStorage(data);
+    } catch (err) {
+      console.error('加载存储信息失败:', err);
     }
   };
 
@@ -254,6 +265,7 @@ export default function Home() {
 
   const handleActionSuccess = () => {
     loadFiles();
+    loadStorage();
   };
 
   return (
@@ -270,6 +282,7 @@ export default function Home() {
           currentFolderId={currentFolderId}
           currentType={currentType}
           isTrashView={isTrashView}
+          storage={storage}
         />
       )}
 
@@ -343,6 +356,7 @@ export default function Home() {
         currentType={currentType}
         isTrashView={isTrashView}
         onSearch={handleSearch}
+        storage={storage}
       />
 
       <ActionSheet
@@ -357,6 +371,7 @@ export default function Home() {
         onClose={() => setShowUpload(false)}
         currentFolderId={currentFolderId}
         onUploadSuccess={loadFiles}
+        storage={storage}
       />
 
       <CreateFolderModal
@@ -379,6 +394,7 @@ export default function Home() {
           onMove={handleMove}
           onRestore={handleRestore}
           isTrashView={isTrashView}
+          storage={storage}
         />
       )}
 
