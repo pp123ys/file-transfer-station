@@ -1,5 +1,5 @@
 {
-  "name": "cloudfile-frontend",
+  "name": "guantou-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -27,3 +27,4 @@
     "vite": "^5.0.8"
   }
 }
+

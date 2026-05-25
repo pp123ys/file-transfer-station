@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
+﻿from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.file import (
     FileResponse as FileSchema, FileListResponse, FolderCreate,
-    FileUpdate, MessageResponse
+    FileUpdate, MessageResponse, FileType
 )
 from app.services.file import FileService
 from app.utils.security import get_current_user, get_user_from_token
@@ -18,15 +18,18 @@ router = APIRouter(prefix="/api/files", tags=["文件"])
 @router.get("", response_model=FileListResponse)
 async def get_files(
     parent_id: Optional[int] = Query(None, description="父文件夹ID，null表示根目录"),
-    file_type: Optional[str] = Query(None, description="文件类型筛选: documents, images, videos, downloads"),
+    file_type: Optional[FileType] = Query(None, description="文件类型筛选"),
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(50, ge=1, le=200, description="返回的最大记录数"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取文件列表"""
-    files = FileService.get_files(db, current_user, parent_id, file_type)
-    return FileListResponse(files=[
-        FileSchema.model_validate(f) for f in files
-    ])
+    files, total = FileService.get_files(db, current_user, parent_id, file_type, skip, limit)
+    return FileListResponse(
+        files=[FileSchema.model_validate(f) for f in files],
+        total=total
+    )
 
 @router.post("/folder", response_model=FileSchema, status_code=201)
 async def create_folder(
@@ -46,7 +49,6 @@ async def upload_file(
     db: Session = Depends(get_db)
 ):
     """上传文件"""
-    # 处理 parent_id 的类型转换
     parent_id_int = None
     if parent_id and parent_id.strip():
         try:
@@ -132,14 +134,17 @@ async def delete_file(
 
 @router.get("/trash", response_model=FileListResponse)
 async def get_trash_files(
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(50, ge=1, le=200, description="返回的最大记录数"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取回收站文件"""
-    files = FileService.get_trash_files(db, current_user)
-    return FileListResponse(files=[
-        FileSchema.model_validate(f) for f in files
-    ])
+    files, total = FileService.get_trash_files(db, current_user, skip, limit)
+    return FileListResponse(
+        files=[FileSchema.model_validate(f) for f in files],
+        total=total
+    )
 
 @router.post("/{file_id}/restore", response_model=FileSchema)
 async def restore_file(
@@ -164,11 +169,14 @@ async def permanent_delete_file(
 @router.get("/search", response_model=FileListResponse)
 async def search_files(
     q: str = Query(..., description="搜索关键词"),
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(50, ge=1, le=200, description="返回的最大记录数"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """搜索文件"""
-    files = FileService.search_files(db, current_user, q)
-    return FileListResponse(files=[
-        FileSchema.model_validate(f) for f in files
-    ])
+    files, total = FileService.search_files(db, current_user, q, skip, limit)
+    return FileListResponse(
+        files=[FileSchema.model_validate(f) for f in files],
+        total=total
+    )

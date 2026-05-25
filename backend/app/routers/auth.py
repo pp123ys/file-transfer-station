@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.user import UserCreate, UserResponse, AuthResponse
 from app.services.auth import AuthService
 from app.utils.security import get_current_user
+from app.utils.rate_limit import get_limiter
 from app.models.user import User
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
+limiter = get_limiter()
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """用户注册"""
     user = AuthService.create_user(db, user_data)
     token = AuthService.create_token(user)
@@ -22,7 +25,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=AuthResponse)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """用户登录"""
     user = AuthService.authenticate_user(db, form_data.username, form_data.password)
     
@@ -50,5 +54,5 @@ async def get_current_user_info(
 
 @router.post("/logout")
 async def logout():
-    """用户登出（前端清除Token即可）"""
+    """用户登出（前端清除token即可）"""
     return {"message": "登出成功"}

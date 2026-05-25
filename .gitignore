@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -45,10 +45,7 @@ dist/
 dist-ssr/
 *.local
 
-# 包管理
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# 包管理（锁文件应提交以确保可复现构建）
 
 # 测试覆盖率
 coverage/
@@ -57,3 +54,4 @@ htmlcov/
 # 临时文件
 *.tmp
 .cache/
+

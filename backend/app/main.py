@@ -1,18 +1,30 @@
-from fastapi import FastAPI
+﻿import os
+from dotenv import load_dotenv
+load_dotenv()
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from app.database import engine
 from app.models import user, file
 from app.routers import auth, files
+from app.utils.rate_limit import get_limiter
 
 # Create tables
 user.Base.metadata.create_all(bind=engine)
 file.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="CloudFileManager API",
-    description="私有云盘文件管理器API",
+    title="罐头文件管理器",
+    description="罐头文件管理器",
     version="1.0.0"
 )
+
+# Rate limiter
+limiter = get_limiter()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS配置
 app.add_middleware(
@@ -29,8 +41,9 @@ app.include_router(files.router)
 
 @app.get("/")
 async def root():
-    return {"message": "CloudFileManager API", "version": "1.0.0"}
+    return {"message": "罐头文件管理器", "version": "1.0.0"}
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,7 +37,7 @@ export default function Login() {
               </svg>
             </div>
           </div>
-          <h1 className="text-display-md font-semibold text-ink">CloudFile</h1>
+          <h1 className="text-display-md font-semibold text-ink">罐头</h1>
           <p className="text-body-sm text-body mt-2">安全的私有文件管理</p>
         </div>
 
@@ -99,3 +99,4 @@ export default function Login() {
     </div>
   );
 }
+

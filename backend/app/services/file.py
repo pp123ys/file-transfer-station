@@ -1,4 +1,4 @@
-from typing import List, Optional
+﻿from typing import List, Optional, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile, status
@@ -12,8 +12,9 @@ class FileService:
     """文件服务"""
     
     @staticmethod
-    def get_files(db: Session, user: User, parent_id: Optional[int] = None, file_type: Optional[str] = None) -> List[File]:
-        """获取文件列表（排除已删除的文件）"""
+    def get_files(db: Session, user: User, parent_id: Optional[int] = None, file_type: Optional[str] = None, 
+                  skip: int = 0, limit: int = 50) -> Tuple[List[File], int]:
+        """获取文件列表（排除已删除的文件），返回 (files, total)"""
         query = db.query(File).filter(
             File.user_id == user.id,
             File.is_deleted == False
@@ -51,15 +52,20 @@ class FileService:
                     File.name.ilike('%.msi')
                 )
         
-        return query.order_by(File.is_folder.desc(), File.name).all()
+        total = query.count()
+        files = query.order_by(File.is_folder.desc(), File.name).offset(skip).limit(limit).all()
+        return files, total
     
     @staticmethod
-    def get_trash_files(db: Session, user: User) -> List[File]:
-        """获取回收站文件"""
-        return db.query(File).filter(
+    def get_trash_files(db: Session, user: User, skip: int = 0, limit: int = 50) -> Tuple[List[File], int]:
+        """获取回收站文件，返回 (files, total)"""
+        query = db.query(File).filter(
             File.user_id == user.id,
             File.is_deleted == True
-        ).order_by(File.deleted_at.desc()).all()
+        )
+        total = query.count()
+        files = query.order_by(File.deleted_at.desc()).offset(skip).limit(limit).all()
+        return files, total
     
     @staticmethod
     def restore_file(db: Session, user: User, file_id: int) -> File:
@@ -110,7 +116,6 @@ class FileService:
     @staticmethod
     def create_folder(db: Session, user: User, folder_data: FolderCreate) -> File:
         """创建文件夹"""
-        # 检查同名文件是否存在
         existing = db.query(File).filter(
             File.user_id == user.id,
             File.parent_id == folder_data.parent_id,
@@ -124,12 +129,12 @@ class FileService:
                 detail="文件夹已存在"
             )
         
-        # 创建文件夹记录
         db_folder = File(
             user_id=user.id,
             name=folder_data.name,
-            path="",  # 文件夹不需要path
+            path=f"folder_{folder_data.name}",
             is_folder=True,
+            size=0,
             parent_id=folder_data.parent_id
         )
         db.add(db_folder)
@@ -141,10 +146,8 @@ class FileService:
     @staticmethod
     async def upload_file(db: Session, user: User, upload_file: UploadFile, parent_id: Optional[int] = None) -> File:
         """上传文件"""
-        # 保存物理文件
         db_path, file_size = await save_upload_file(upload_file, user.id)
         
-        # 检查同名文件是否存在
         existing = db.query(File).filter(
             File.user_id == user.id,
             File.parent_id == parent_id,
@@ -158,7 +161,6 @@ class FileService:
                 detail="文件已存在"
             )
         
-        # 创建文件记录
         db_file = File(
             user_id=user.id,
             name=upload_file.filename,
@@ -183,9 +185,7 @@ class FileService:
                 detail="文件不存在"
             )
         
-        # 如果要重命名
         if update_data.name and update_data.name != file.name:
-            # 检查同名文件是否存在（区分文件/文件夹）
             parent_id = update_data.parent_id if update_data.parent_id is not None else file.parent_id
             existing = db.query(File).filter(
                 File.user_id == user.id,
@@ -203,10 +203,8 @@ class FileService:
             
             file.name = update_data.name
         
-        # 如果要移动
         if update_data.parent_id is not None:
-            # 检查目标文件夹是否存在且属于当前用户
-            if update_data.parent_id != file.id:  # 不能移动到自己的文件夹
+            if update_data.parent_id != file.id:
                 target_folder = FileService.get_file_by_id(db, update_data.parent_id, user)
                 if not target_folder or not target_folder.is_folder:
                     raise HTTPException(
@@ -216,7 +214,6 @@ class FileService:
             
             file.parent_id = update_data.parent_id
         
-        # 更新时间戳
         file.updated_at = datetime.utcnow()
         
         db.commit()
@@ -285,9 +282,13 @@ class FileService:
         db.delete(folder)
     
     @staticmethod
-    def search_files(db: Session, user: User, keyword: str) -> List[File]:
-        """搜索文件"""
-        return db.query(File).filter(
+    def search_files(db: Session, user: User, keyword: str, skip: int = 0, limit: int = 50) -> Tuple[List[File], int]:
+        """搜索文件，返回 (files, total)"""
+        query = db.query(File).filter(
             File.user_id == user.id,
+            File.is_deleted == False,
             File.name.contains(keyword)
-        ).order_by(File.is_folder.desc(), File.name).all()
+        )
+        total = query.count()
+        files = query.order_by(File.is_folder.desc(), File.name).offset(skip).limit(limit).all()
+        return files, total
