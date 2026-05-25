@@ -1,4 +1,4 @@
-﻿import os
+import os
 
 # 数据库配置 - MySQL（强烈建议使用环境变量）
 DATABASE_URL = os.getenv(
@@ -14,6 +14,13 @@ if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable must be set")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
+
+# 管理员JWT配置
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY")
+if not ADMIN_SECRET_KEY:
+    raise ValueError("ADMIN_SECRET_KEY environment variable must be set")
+ADMIN_ALGORITHM = "HS256"
+ADMIN_ACCESS_TOKEN_EXPIRE_DAYS = 1
 
 # 文件存储配置
 STORAGE_PATH = os.getenv("STORAGE_PATH", "./storage")
