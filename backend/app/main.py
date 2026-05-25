@@ -1,4 +1,4 @@
-﻿import os
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -8,7 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.database import engine
 from app.models import user, file
-from app.routers import auth, files
+from app.routers import auth, files, admin_auth, admin_users, admin_files
 from app.utils.rate_limit import get_limiter
 
 # Create tables
@@ -38,6 +38,9 @@ app.add_middleware(
 # 注册路由
 app.include_router(auth.router)
 app.include_router(files.router)
+app.include_router(admin_auth.router)
+app.include_router(admin_users.router)
+app.include_router(admin_files.router)
 
 @app.get("/")
 async def root():
