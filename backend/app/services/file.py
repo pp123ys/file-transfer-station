@@ -5,8 +5,11 @@ from fastapi import HTTPException, UploadFile, status
 from app.models.file import File
 from app.models.user import User
 from app.schemas.file import FileCreate, FolderCreate, FileUpdate, FileResponse
-from app.utils.file import save_upload_file, delete_physical_file, get_user_storage_path
+from app.utils.file import save_upload_file, delete_physical_file, delete_thumbnail_file, get_user_storage_path, get_file_extension, is_image_file
+from app.services.thumbnail import thumbnail_service
+from app.config import STORAGE_PATH
 import shutil
+from pathlib import Path
 
 class FileService:
     """文件服务"""
@@ -146,7 +149,7 @@ class FileService:
     @staticmethod
     async def upload_file(db: Session, user: User, upload_file: UploadFile, parent_id: Optional[int] = None) -> File:
         """上传文件"""
-        db_path, file_size = await save_upload_file(upload_file, user.id, db)
+        db_path, file_size, mime_type = await save_upload_file(upload_file, user.id, db)
         
         existing = db.query(File).filter(
             File.user_id == user.id,
@@ -172,6 +175,12 @@ class FileService:
         db.add(db_file)
         db.commit()
         db.refresh(db_file)
+        
+        extension = get_file_extension(upload_file.filename)
+        if is_image_file(extension):
+            source_path = get_user_storage_path(user.id) / db_path
+            thumbnail_path = thumbnail_service.get_full_thumbnail_path(user.id, db_file.id, extension)
+            thumbnail_service.generate_thumbnail(str(source_path), str(thumbnail_path))
         
         return db_file
     
@@ -237,6 +246,8 @@ class FileService:
             else:
                 if file.path:
                     delete_physical_file(file.path, user.id)
+                    extension = get_file_extension(file.name)
+                    delete_thumbnail_file(file.id, user.id, extension)
             db.delete(file)
         else:
             file.is_deleted = True

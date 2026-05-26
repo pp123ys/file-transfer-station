@@ -12,4 +12,5 @@ email-validator==2.1.0
 aiofiles==23.2.1
 slowapi==0.1.9
 aiosmtplib==3.0.1
+Pillow==10.1.0
 

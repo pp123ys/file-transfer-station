@@ -1,10 +1,42 @@
 import os
 import uuid
+import mimetypes
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from fastapi import UploadFile, HTTPException, status
 from app.config import STORAGE_PATH, MAX_FILE_SIZE, ALLOWED_EXTENSIONS
 from sqlalchemy.orm import Session
+
+ALLOWED_MIME_TYPES = {
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain', 'text/markdown',
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4',
+    'video/mp4', 'video/webm', 'video/avi',
+    'application/json', 'application/xml'
+}
+
+BLOCKED_EXTENSIONS = {'exe', 'bat', 'sh', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar'}
+
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
+
+def is_allowed_file_type(mime_type: str, extension: str) -> bool:
+    if extension.lower().lstrip('.') in BLOCKED_EXTENSIONS:
+        return False
+    return mime_type in ALLOWED_MIME_TYPES
+
+def validate_file_type(mime_type: str, extension: str) -> Tuple[bool, str]:
+    ext_without_dot = extension.lower().lstrip('.')
+    if ext_without_dot in BLOCKED_EXTENSIONS:
+        return False, f"禁止的文件类型：.{extension}"
+    if mime_type not in ALLOWED_MIME_TYPES:
+        return False, f"不支持的文件类型：{mime_type}"
+    return True, ""
+
+def is_image_file(extension: str) -> bool:
+    return extension.lower() in IMAGE_EXTENSIONS
 
 def get_user_storage_path(user_id: int) -> Path:
     """获取用户的存储路径"""
@@ -37,8 +69,8 @@ def validate_filename(filename: str) -> bool:
     dangerous_chars = ['..', '/', '\\', '\x00']
     return not any(char in filename for char in dangerous_chars)
 
-async def save_upload_file(upload_file: UploadFile, user_id: int, db: Session = None) -> tuple[str, int]:
-    """保存上传的文件，返回(db_path, file_size)"""
+async def save_upload_file(upload_file: UploadFile, user_id: int, db: Session = None) -> Tuple[str, int, str]:
+    """保存上传的文件，返回(db_path, file_size, mime_type)"""
     if not upload_file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,10 +106,30 @@ async def save_upload_file(upload_file: UploadFile, user_id: int, db: Session = 
                 )
             buffer.write(chunk)
     
-    return unique_filename, file_size
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if mime_type is None:
+        mime_type = "application/octet-stream"
+    
+    extension = get_file_extension(upload_file.filename)
+    is_valid, error_msg = validate_file_type(mime_type, extension)
+    if not is_valid:
+        os.remove(file_path)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg
+        )
+    
+    return unique_filename, file_size, mime_type
 
 def delete_physical_file(file_path: str, user_id: int) -> None:
     """删除物理文件"""
     full_path = get_file_path(user_id, file_path)
     if full_path.exists():
         os.remove(full_path)
+
+def delete_thumbnail_file(file_id: int, user_id: int, extension: str) -> None:
+    """删除缩略图文件"""
+    thumbnail_dir = Path(STORAGE_PATH) / "thumbnails" / str(user_id)
+    thumbnail_path = thumbnail_dir / f"{file_id}_thumb{extension}"
+    if thumbnail_path.exists():
+        os.remove(thumbnail_path)

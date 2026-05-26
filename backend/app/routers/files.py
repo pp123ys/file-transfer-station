@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException, Request
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -10,7 +10,8 @@ from app.schemas.file import (
 )
 from app.services.file import FileService
 from app.utils.security import get_current_user, get_optional_user, get_user_from_token
-from app.utils.file import get_file_path
+from app.utils.file import get_file_path, get_file_extension, is_image_file
+from app.services.thumbnail import thumbnail_service
 import mimetypes
 
 router = APIRouter(prefix="/api/files", tags=["文件"])
@@ -125,6 +126,43 @@ async def preview_file(
         path=str(file_path),
         media_type=mime_type,
         filename=file.name
+    )
+
+@router.get("/thumbnail/{file_id}")
+async def get_thumbnail(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取文件缩略图（仅图片文件）"""
+    file = FileService.get_file_by_id(db, file_id, current_user)
+    if not file:
+        raise HTTPException(status_code=404, detail="文件不存在")
+    
+    if file.is_folder:
+        raise HTTPException(status_code=400, detail="文件夹无缩略图")
+    
+    extension = get_file_extension(file.name)
+    if not is_image_file(extension):
+        raise HTTPException(status_code=400, detail="非图片文件无缩略图")
+    
+    thumbnail_path = thumbnail_service.get_full_thumbnail_path(current_user.id, file.id, extension)
+    if not thumbnail_path.exists():
+        file_path = get_file_path(current_user.id, file.path)
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="源文件不存在")
+        thumbnail_service.generate_thumbnail(str(file_path), str(thumbnail_path))
+        if not thumbnail_path.exists():
+            raise HTTPException(status_code=500, detail="缩略图生成失败")
+    
+    mime_type, _ = mimetypes.guess_type(str(thumbnail_path))
+    if mime_type is None:
+        mime_type = "image/jpeg"
+    
+    return FileResponse(
+        path=str(thumbnail_path),
+        media_type=mime_type,
+        filename=f"{file.name}_thumb{extension}"
     )
 
 
