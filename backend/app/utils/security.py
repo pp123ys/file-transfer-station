@@ -84,6 +84,15 @@ def get_current_user(
     
     return user
 
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    if credentials is None:
+        return None
+    return get_user_from_token(credentials.credentials, db)
+
 def get_user_from_token(token: str, db: Session) -> Optional[User]:
     """从token获取用户（用于URL参数token）"""
     if not token:

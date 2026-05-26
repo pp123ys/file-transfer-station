@@ -14,6 +14,7 @@ import UserDetail from './admin/pages/UserDetail';
 import Files from './admin/pages/Files';
 import Settings from './admin/pages/Settings';
 import AuditLogs from './admin/pages/AuditLogs';
+import Announcements from './admin/pages/Announcements';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -136,6 +137,7 @@ function App() {
                 <Route path="files" element={<Files />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="announcements" element={<Announcements />} />
               </Route>
             </Routes>
           </BrowserRouter>

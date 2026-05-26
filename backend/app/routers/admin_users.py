@@ -44,7 +44,8 @@ async def get_users(
             "is_admin": user.is_admin,
             "created_at": user.created_at,
             "file_count": file_count,
-            "storage_used": storage_used
+            "storage_used": storage_used,
+            "storage_quota_gb": user.storage_quota_gb
         })
     
     return {
@@ -74,6 +75,7 @@ async def get_user_detail(
         "user": UserResponse.model_validate(user),
         "file_count": file_count,
         "storage_used": storage_used,
+        "storage_quota_gb": user.storage_quota_gb,
         "files": [
             {
                 "id": f.id,
@@ -147,3 +149,74 @@ async def delete_user(
     db.commit()
     
     return {"message": "用户已删除"}
+
+
+@router.put("/{user_id}/password")
+async def admin_change_user_password(
+    user_id: int,
+    request: Request,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+
+    data = await request.json()
+    from app.schemas.user import AdminChangePasswordRequest
+    from app.utils.security import get_password_hash
+
+    req = AdminChangePasswordRequest(**data)
+
+    user.password_hash = get_password_hash(req.new_password)
+    db.commit()
+
+    ip_address = request.client.host if request.client else None
+    AdminService.create_audit_log(
+        db=db,
+        admin_id=current_admin.id,
+        action="change_user_password",
+        target_type="user",
+        target_id=user.id,
+        ip_address=ip_address,
+        details=f"修改用户 {user.username} 的密码"
+    )
+
+    return {"message": "密码修改成功"}
+
+
+@router.put("/{user_id}/quota")
+async def admin_set_user_quota(
+    user_id: int,
+    request: Request,
+    current_admin: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+
+    data = await request.json()
+    from app.schemas.user import AdminSetQuotaRequest
+
+    req = AdminSetQuotaRequest(**data)
+
+    if req.storage_quota_gb is not None and req.storage_quota_gb <= 0:
+        raise HTTPException(status_code=400, detail="配额必须大于0")
+
+    user.storage_quota_gb = req.storage_quota_gb
+    db.commit()
+
+    ip_address = request.client.host if request.client else None
+    quota_str = f"{req.storage_quota_gb}GB" if req.storage_quota_gb else "全局默认"
+    AdminService.create_audit_log(
+        db=db,
+        admin_id=current_admin.id,
+        action="set_user_quota",
+        target_type="user",
+        target_id=user.id,
+        ip_address=ip_address,
+        details=f"设置用户 {user.username} 存储配额为 {quota_str}"
+    )
+
+    return {"message": "配额设置成功", "storage_quota_gb": req.storage_quota_gb}

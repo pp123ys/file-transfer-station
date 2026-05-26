@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') 
+  ? (import.meta.env.VITE_API_URL || '') 
   : '';
 
 const adminAPI = axios.create({
@@ -85,6 +85,20 @@ export const adminUsersAPI = {
     const response = await adminAPI.delete(`/api/admin/users/${userId}`);
     return response.data;
   },
+
+  changeUserPassword: async (userId, newPassword) => {
+    const response = await adminAPI.put(`/api/admin/users/${userId}/password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+
+  setUserQuota: async (userId, storageQuotaGb) => {
+    const response = await adminAPI.put(`/api/admin/users/${userId}/quota`, {
+      storage_quota_gb: storageQuotaGb,
+    });
+    return response.data;
+  },
 };
 
 export const adminFilesAPI = {
@@ -152,6 +166,33 @@ export const adminAuditLogsAPI = {
       params.end_date = endDate;
     }
     const response = await adminAPI.get('/api/admin/audit-logs', { params });
+    return response.data;
+  },
+};
+
+export const adminAnnouncementsAPI = {
+  getAnnouncements: async () => {
+    const response = await adminAPI.get('/api/admin/announcements');
+    return response.data;
+  },
+
+  createAnnouncement: async (data) => {
+    const response = await adminAPI.post('/api/admin/announcements', data);
+    return response.data;
+  },
+
+  updateAnnouncement: async (id, data) => {
+    const response = await adminAPI.put(`/api/admin/announcements/${id}`, data);
+    return response.data;
+  },
+
+  deleteAnnouncement: async (id) => {
+    const response = await adminAPI.delete(`/api/admin/announcements/${id}`);
+    return response.data;
+  },
+
+  toggleAnnouncement: async (id) => {
+    const response = await adminAPI.patch(`/api/admin/announcements/${id}/toggle`);
     return response.data;
   },
 };

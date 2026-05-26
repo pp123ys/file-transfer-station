@@ -63,3 +63,28 @@ async def get_current_user_info(
 async def logout():
     """用户登出（前端清除token即可）"""
     return {"message": "登出成功"}
+
+
+@router.put("/change-password")
+@limiter.limit("5/minute")
+async def change_password(
+    request: Request,
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.schemas.user import ChangePasswordRequest
+    from app.utils.security import verify_password, get_password_hash
+
+    req = ChangePasswordRequest(**data)
+
+    if not verify_password(req.old_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="旧密码错误"
+        )
+
+    current_user.password_hash = get_password_hash(req.new_password)
+    db.commit()
+
+    return {"message": "密码修改成功"}

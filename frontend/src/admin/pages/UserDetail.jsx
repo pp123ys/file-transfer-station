@@ -9,6 +9,14 @@ export default function UserDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState({ type: "", text: "" });
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const [quotaGb, setQuotaGb] = useState("");
+  const [quotaMsg, setQuotaMsg] = useState({ type: "", text: "" });
+  const [savingQuota, setSavingQuota] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +34,64 @@ export default function UserDetail() {
       setError(error.response?.data?.detail || '加载用户详情失败，请稍后重试');
     } finally {
       setLoading(false);
+    }
+  };
+
+    const handleChangePassword = async () => {
+    setPasswordMsg({ type: "", text: "" });
+    if (newPassword.length < 6) {
+      setPasswordMsg({ type: "error", text: "密码至少6位" });
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await adminUsersAPI.changeUserPassword(userId, newPassword);
+      setPasswordMsg({ type: "success", text: "密码修改成功" });
+      setNewPassword("");
+    } catch (err) {
+      setPasswordMsg({ type: "error", text: err.response?.data?.detail || "修改失败" });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleSaveQuota = async () => {
+    setQuotaMsg({ type: "", text: "" });
+    const val = quotaGb.trim();
+    let quotaValue = null;
+    if (val !== "") {
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num <= 0) {
+        setQuotaMsg({ type: "error", text: "请输入有效的正整数" });
+        return;
+      }
+      quotaValue = num;
+    }
+
+    setSavingQuota(true);
+    try {
+      await adminUsersAPI.setUserQuota(userId, quotaValue);
+      setQuotaMsg({ type: "success", text: "配额设置成功" });
+      loadUser();
+    } catch (err) {
+      setQuotaMsg({ type: "error", text: err.response?.data?.detail || "设置失败" });
+    } finally {
+      setSavingQuota(false);
+    }
+  };
+
+  const handleResetQuota = async () => {
+    setSavingQuota(true);
+    try {
+      await adminUsersAPI.setUserQuota(userId, null);
+      setQuotaMsg({ type: "success", text: "已重置为全局默认配额" });
+      setQuotaGb("");
+      loadUser();
+    } catch (err) {
+      setQuotaMsg({ type: "error", text: err.response?.data?.detail || "重置失败" });
+    } finally {
+      setSavingQuota(false);
     }
   };
 
@@ -129,6 +195,91 @@ export default function UserDetail() {
             <p className="text-sm text-gray-500">存储使用</p>
             <p className="text-lg font-medium">{formatBytes(data.storage_used)}</p>
           </div>
+        </div>
+      </div>
+
+            {/* 密码管理 */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">密码管理</h2>
+
+        {passwordMsg.text && (
+          <div className={`mb-4 px-4 py-3 rounded ${
+            passwordMsg.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {passwordMsg.text}
+          </div>
+        )}
+
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">新密码</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="至少6位"
+            />
+          </div>
+          <button
+            onClick={handleChangePassword}
+            disabled={changingPassword}
+            className="px-4 py-2 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+          >
+            {changingPassword ? "修改中..." : "修改密码"}
+          </button>
+        </div>
+      </div>
+
+      {/* 存储配额 */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">存储配额</h2>
+
+        {quotaMsg.text && (
+          <div className={`mb-4 px-4 py-3 rounded ${
+            quotaMsg.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {quotaMsg.text}
+          </div>
+        )}
+
+        <div className="text-sm text-gray-600 mb-3">
+          当前配额：
+          {data.storage_quota_gb != null
+            ? <span className="font-semibold">{data.storage_quota_gb} GB（个人）</span>
+            : <span>全局默认</span>
+          }
+          {" | "}已使用：{formatBytes(data.storage_used)}
+        </div>
+
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              新配额 (GB) - 留空使用全局默认
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={quotaGb}
+              onChange={(e) => setQuotaGb(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={data.storage_quota_gb != null ? String(data.storage_quota_gb) : "使用全局默认"}
+            />
+          </div>
+          <button
+            onClick={handleSaveQuota}
+            disabled={savingQuota}
+            className="px-4 py-2 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+          >
+            {savingQuota ? "保存中..." : "保存"}
+          </button>
+          <button
+            onClick={handleResetQuota}
+            disabled={savingQuota}
+            className="px-4 py-2 h-10 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 whitespace-nowrap"
+          >
+            重置为默认
+          </button>
         </div>
       </div>
 

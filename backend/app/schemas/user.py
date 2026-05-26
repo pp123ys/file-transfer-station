@@ -33,3 +33,16 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)
+
+
+class AdminChangePasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=6)
+
+
+class AdminSetQuotaRequest(BaseModel):
+    storage_quota_gb: Optional[int] = Field(None)

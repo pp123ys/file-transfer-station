@@ -11,6 +11,7 @@ import CreateFolderModal from '../components/CreateFolderModal';
 import ContextMenu from '../components/ContextMenu';
 import FileActionModals from '../components/FileActionModals';
 import PreviewModal from '../components/PreviewModal';
+import AnnouncementBanner from '../components/AnnouncementBanner';
 import { useAuth } from '../context/AuthContext';
 import { filesAPI } from '../api/files';
 import { useIsMobile } from '../hooks/useMediaQuery';
@@ -288,6 +289,7 @@ export default function Home() {
 
       <div className={`${isMobile ? '' : 'ml-64'}`}>
         <main className={`${isMobile ? 'px-4 py-4' : 'max-w-7xl mx-auto py-6 px-6'}`}>
+          <AnnouncementBanner />
           <div className="mb-4 tablet:mb-6">
             <div className="flex flex-col mobile:flex-row justify-between items-start mobile:items-center gap-3">
               <Breadcrumb path={breadcrumbPath} onNavigate={handleNavigate} />

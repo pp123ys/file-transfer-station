@@ -7,6 +7,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -83,7 +84,17 @@ export default function Login() {
           </form>
 
           <div className="mt-6 pt-4 border-t border-hairline">
-            <p className="text-center text-body-sm text-body">
+            <div className="text-right mt-2">
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-body-sm text-link hover:text-link-deep"
+              >
+                忘记密码？
+              </button>
+            </div>
+
+            <p className="text-center text-body-sm text-body mt-4">
               还没有账号？{' '}
               <Link to="/register" className="text-link hover:text-link-deep font-medium">
                 注册
@@ -96,6 +107,38 @@ export default function Login() {
           登录即表示您同意我们的服务条款和隐私政策
         </p>
       </div>
+    
+
+      {/* 忘记密码弹窗 */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">忘记密码</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                请联系管理员重置密码
+              </p>
+              <a
+                href="mailto:3378511142@qq.com"
+                className="block mt-3 text-blue-600 font-medium text-lg hover:text-blue-800"
+              >
+                3378511142@qq.com
+              </a>
+            </div>
+            <button
+              onClick={() => setShowForgotModal(false)}
+              className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              知道了
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

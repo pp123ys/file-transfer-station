@@ -12,6 +12,7 @@ class User(Base):
     email = Column(String(100), unique=True, index=True)
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    storage_quota_gb = Column(Integer, nullable=True, default=None)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     files = relationship("File", back_populates="owner", cascade="all, delete-orphan")

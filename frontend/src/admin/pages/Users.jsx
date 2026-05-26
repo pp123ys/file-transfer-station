@@ -63,6 +63,11 @@ export default function Users() {
       render: (val) => val || 0
     },
     {
+      key: 'storage_quota_gb',
+      label: '配额',
+      render: (val) => val != null ? `${val} GB` : '默认',
+    },
+    {
       key: 'storage_used',
       label: '存储使用',
       render: (val) => formatBytes(val || 0)

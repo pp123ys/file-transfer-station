@@ -284,7 +284,6 @@ class FileService:
 
     @staticmethod
     def get_storage_usage(db: Session, user: User) -> dict:
-        """获取用户存储使用情况（不含软删除文件）"""
         from app.config import STORAGE_QUOTA_BYTES
         from app.models.system_config import SystemConfig
         from sqlalchemy import func
@@ -295,17 +294,19 @@ class FileService:
         ).scalar()
 
         used = int(result)
-        
-        config = db.query(SystemConfig).filter(SystemConfig.config_key == 'storage_quota').first()
-        if config and config.config_value.isdigit():
-            total = int(config.config_value) * 1024 * 1024 * 1024
+
+        if user.storage_quota_gb is not None:
+            total = user.storage_quota_gb * 1024 * 1024 * 1024
         else:
-            total = STORAGE_QUOTA_BYTES
-            
+            config = db.query(SystemConfig).filter(SystemConfig.config_key == "storage_quota").first()
+            if config and config.config_value.isdigit():
+                total = int(config.config_value) * 1024 * 1024 * 1024
+            else:
+                total = STORAGE_QUOTA_BYTES
+
         available = max(0, total - used)
 
         return {"used": used, "total": total, "available": available}
-
     @staticmethod
     def search_files(db: Session, user: User, keyword: str, skip: int = 0, limit: int = 50) -> Tuple[List[File], int]:
         """搜索文件，返回 (files, total)"""

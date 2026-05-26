@@ -32,4 +32,12 @@ export const authAPI = {
     const response = await api.post('/api/auth/logout');
     return response.data;
   },
+
+  changePassword: async (oldPassword, newPassword) => {
+    const response = await api.put('/api/auth/change-password', {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
 };
