@@ -1,14 +1,17 @@
 import api from './index';
 
+export const register = async (data) => {
+  const response = await api.post('/api/auth/register', {
+    username: data.username,
+    password: data.password,
+    email: data.email,
+    verification_code: data.verification_code,
+  });
+  return response.data;
+};
+
 export const authAPI = {
-  register: async (username, password, email) => {
-    const response = await api.post('/api/auth/register', {
-      username,
-      password,
-      email,
-    });
-    return response.data;
-  },
+  register,
 
   login: async (username, password) => {
     const formData = new URLSearchParams();

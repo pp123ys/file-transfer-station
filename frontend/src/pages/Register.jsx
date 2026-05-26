@@ -1,140 +1,172 @@
-﻿import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { register } from '../api/auth';
+import { sendVerificationCode } from '../api/email';
 
-export default function Register() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+function Register() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    email: '',
+    verificationCode: ''
+  });
+  const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { register } = useAuth();
-  const navigate = useNavigate();
+  const [codeSent, setCodeSent] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSendCode = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      await sendVerificationCode(formData.email);
+      setCodeSent(true);
+      setStep(2);
+    } catch (err) {
+      setError(err.response?.data?.detail || '发送验证码失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('两次密码输入不一致');
       return;
     }
-
-    if (password.length < 6) {
-      setError('密码长度至少为6位');
-      return;
-    }
-
+    
     setLoading(true);
-
+    setError('');
+    
     try {
-      await register(username, password, email);
-      navigate('/');
+      await register({
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        verification_code: formData.verificationCode
+      });
+      navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.detail || '注册失败，请重试');
+      setError(err.response?.data?.detail || '注册失败');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-canvas-soft flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-10 h-10 rounded-md bg-gradient-to-br from-gradient-develop-start to-gradient-develop-end flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-            </div>
+    <div className="min-h-screen bg-canvas-soft flex items-center justify-center px-md">
+      <div className="card max-w-md w-full">
+        <h1 className="text-display-md mb-lg text-center">注册账号</h1>
+        
+        {error && (
+          <div className="bg-error-soft text-error px-sm py-xs rounded-sm mb-md text-body-sm">
+            {error}
           </div>
-          <h1 className="text-display-md font-semibold text-ink">罐头</h1>
-          <p className="text-body-sm text-body mt-2">创建您的私有云盘</p>
-        </div>
-
-        <div className="card-marketing">
-          {error && (
-            <div className="bg-error-soft text-error-deep px-4 py-3 rounded-sm mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+        )}
+        
+        {step === 1 ? (
+          <form onSubmit={handleSendCode} className="space-y-md">
             <div>
-              <label className="block text-body-sm-strong text-ink mb-2">用户名</label>
+              <label className="block text-body-sm mb-xs">用户名</label>
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="form-input w-full"
-                placeholder="请输入用户名"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="input w-full"
                 required
-                minLength={3}
               />
             </div>
-
+            
             <div>
-              <label className="block text-body-sm-strong text-ink mb-2">邮箱（可选）</label>
+              <label className="block text-body-sm mb-xs">邮箱</label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="form-input w-full"
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-body-sm-strong text-ink mb-2">密码</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="form-input w-full"
-                placeholder="请输入密码"
-                required
-                minLength={6}
-              />
-            </div>
-
-            <div>
-              <label className="block text-body-sm-strong text-ink mb-2">确认密码</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="form-input w-full"
-                placeholder="请再次输入密码"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="input w-full"
                 required
               />
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full h-11 font-medium text-body-md-strong disabled:opacity-50"
-            >
-              {loading ? '注册中...' : '注册'}
+            
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? '发送中...' : '发送验证码'}
             </button>
           </form>
-
-          <div className="mt-6 pt-4 border-t border-hairline">
-            <p className="text-center text-body-sm text-body">
-              已有账号？{' '}
-              <Link to="/login" className="text-link hover:text-link-deep font-medium">
-                登录
-              </Link>
-            </p>
-          </div>
-        </div>
-
-        <p className="text-center text-caption text-mute mt-6">
-          注册即表示您同意我们的服务条款和隐私政策
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-md">
+            <div className="bg-canvas-soft px-md py-sm rounded-md text-body-sm">
+              验证码已发送至 <strong>{formData.email}</strong>
+              <button 
+                type="button" 
+                onClick={() => setStep(1)}
+                className="text-link ml-sm"
+              >
+                修改邮箱
+              </button>
+            </div>
+            
+            <div>
+              <label className="block text-body-sm mb-xs">验证码</label>
+              <input
+                type="text"
+                name="verificationCode"
+                value={formData.verificationCode}
+                onChange={handleChange}
+                className="input w-full"
+                placeholder="请输入6位验证码"
+                maxLength={6}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-body-sm mb-xs">密码</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="input w-full"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-body-sm mb-xs">确认密码</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="input w-full"
+                required
+              />
+            </div>
+            
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? '注册中...' : '完成注册'}
+            </button>
+          </form>
+        )}
+        
+        <p className="text-body-sm text-center mt-lg">
+          已有账号？<Link to="/login" className="text-link">登录</Link>
         </p>
       </div>
     </div>
   );
 }
 
+export default Register;
