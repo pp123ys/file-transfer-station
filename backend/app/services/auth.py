@@ -75,3 +75,19 @@ class AuthService:
     def get_user_by_username(db: Session, username: str) -> Optional[User]:
         """根据用户名获取用户"""
         return db.query(User).filter(User.username == username).first()
+    
+    @staticmethod
+    def update_user_email(db: Session, user_id: int, email: str) -> User:
+        """更新用户邮箱"""
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="用户不存在"
+            )
+        
+        user.email = email
+        db.commit()
+        db.refresh(user)
+        
+        return user
