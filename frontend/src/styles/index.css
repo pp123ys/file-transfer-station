@@ -4,51 +4,70 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #fafafa;
-  color: #171717;
+@layer base {
+  body {
+    @apply font-sans text-body antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink font-semibold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-on-primary rounded-pill px-sm h-12 text-button-lg font-medium transition-all duration-200 hover:bg-opacity-90;
+  }
+  
+  .btn-secondary {
+    @apply bg-canvas text-ink border border-hairline rounded-pill px-sm h-12 text-button-lg font-medium transition-all duration-200 hover:bg-canvas-soft;
+  }
+  
+  .btn-sm {
+    @apply h-8 text-sm rounded-pill px-xs;
+  }
+  
+  .input {
+    @apply bg-canvas text-ink border border-hairline rounded-sm px-sm h-10 text-body-sm transition-all duration-200 focus:outline-none focus:border-primary;
+  }
+  
+  .input-error {
+    @apply border-error bg-error-soft;
+  }
+  
+  .card {
+    @apply bg-canvas rounded-md p-lg shadow-card transition-all duration-200 hover:shadow-card-hover;
+  }
+  
+  .modal {
+    @apply bg-canvas rounded-lg p-xl shadow-modal;
+  }
+  
+  .btn-primary-sm {
+    @apply bg-primary text-white font-medium px-3 py-1.5 rounded-pill text-sm transition-all duration-200 hover:bg-opacity-90;
+  }
+  
+  .btn-secondary-sm {
+    @apply bg-white text-ink font-medium px-3 py-1.5 rounded-pill text-sm border border-hairline transition-all duration-200 hover:bg-canvas-soft;
+  }
+  
+  .card-marketing {
+    @apply bg-white rounded-md p-lg shadow-level-3;
+  }
+  
+  .card-soft {
+    @apply bg-canvas-soft rounded-md p-lg;
+  }
+  
+  .form-input {
+    @apply bg-white border border-hairline rounded-sm px-4 py-2 text-sm transition-all duration-200 focus:outline-none focus:border-primary;
+  }
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 }
 
-/* Vercel-style buttons */
-.btn-primary {
-  @apply bg-primary text-white font-medium px-4 py-2 rounded-pill transition-all duration-200 hover:bg-opacity-90;
-}
-
-.btn-secondary {
-  @apply bg-white text-ink font-medium px-4 py-2 rounded-pill border border-hairline transition-all duration-200 hover:bg-canvas-soft;
-}
-
-.btn-primary-sm {
-  @apply bg-primary text-white font-medium px-3 py-1.5 rounded-pill text-sm transition-all duration-200 hover:bg-opacity-90;
-}
-
-.btn-secondary-sm {
-  @apply bg-white text-ink font-medium px-3 py-1.5 rounded-pill text-sm border border-hairline transition-all duration-200 hover:bg-canvas-soft;
-}
-
-/* Card styles */
-.card-marketing {
-  @apply bg-white rounded-md p-lg shadow-level-3;
-}
-
-.card-soft {
-  @apply bg-canvas-soft rounded-md p-lg;
-}
-
-/* Input styles */
-.form-input {
-  @apply bg-white border border-hairline rounded-sm px-4 py-2 text-sm transition-all duration-200 focus:outline-none focus:border-primary;
-}
-
-/* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -67,9 +86,7 @@ body {
   background: #a1a1a1;
 }
 
-/* Mobile utility classes */
 @layer utilities {
-  /* Touch optimization */
   .touch-manipulation {
     touch-action: manipulation;
   }
@@ -78,7 +95,6 @@ body {
     touch-action: none;
   }
   
-  /* Safe area insets */
   .safe-p-t {
     padding-top: env(safe-area-inset-top);
   }
@@ -95,7 +111,6 @@ body {
     padding-right: env(safe-area-inset-right);
   }
   
-  /* Mobile hide/show */
   .hidden-mobile {
     @apply hidden xs:hidden sm:hidden md:block;
   }
@@ -108,7 +123,6 @@ body {
     @apply block md:hidden;
   }
   
-  /* Mobile text sizing */
   .text-mobile-xs {
     @apply text-[10px] xs:text-[11px] sm:text-xs;
   }
@@ -121,7 +135,6 @@ body {
     @apply text-sm xs:text-base sm:text-base;
   }
   
-  /* Mobile spacing */
   .gap-mobile {
     @apply gap-xs xs:gap-sm sm:gap-md;
   }

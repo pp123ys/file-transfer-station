@@ -16,6 +16,7 @@ export default {
     extend: {
       colors: {
         primary: '#171717',
+        'on-primary': '#ffffff',
         ink: '#171717',
         body: '#4d4d4d',
         mute: '#888888',
@@ -153,6 +154,12 @@ export default {
           fontWeight: '400',
           lineHeight: '20px',
         },
+        'button-lg': {
+          fontFamily: 'Inter, system-ui, sans-serif',
+          fontSize: '16px',
+          fontWeight: '500',
+          lineHeight: '24px',
+        },
       },
       boxShadow: {
         'level-1': '0 0 0 1px rgba(0, 0, 0, 0.086)',
@@ -160,6 +167,14 @@ export default {
         'level-3': '0 2px 2px rgba(0, 0, 0, 0.062), 0 8px 8px -8px rgba(0, 0, 0, 0.062), inset 0 0 0 1px rgba(0, 0, 0, 0.086)',
         'level-4': '0 2px 2px rgba(0, 0, 0, 0.062), 0 8px 16px -4px rgba(0, 0, 0, 0.062), inset 0 0 0 1px rgba(0, 0, 0, 0.086)',
         'level-5': '0 1px 1px rgba(0, 0, 0, 0.031), 0 8px 16px -4px rgba(0, 0, 0, 0.062), 0 24px 32px -8px rgba(0, 0, 0, 0.094), inset 0 0 0 1px rgba(0, 0, 0, 0.086)',
+        'card': '0 1px 1px rgba(0, 0, 0, 0.03), 0 2px 2px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 2px 2px rgba(0, 0, 0, 0.04), 0 8px 8px rgba(0, 0, 0, 0.04)',
+        'modal': '0 1px 1px rgba(0, 0, 0, 0.03), 0 8px 16px rgba(0, 0, 0, 0.05), 0 24px 32px rgba(0, 0, 0, 0.06)',
+      },
+      letterSpacing: {
+        'tight': '-0.028px',
+        'tighter': '-0.056px',
+        'tightest': '-0.06px',
       },
     },
   },
