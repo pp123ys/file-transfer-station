@@ -15,17 +15,10 @@ async def get_settings(
     db: Session = Depends(get_db)
 ):
     configs = db.query(SystemConfig).all()
-    return {
-        "settings": [
-            {
-                "id": config.id,
-                "config_key": config.config_key,
-                "config_value": config.config_value,
-                "updated_at": config.updated_at
-            }
-            for config in configs
-        ]
-    }
+    result = {}
+    for config in configs:
+        result[config.config_key] = config.config_value
+    return {"configs": result}
 
 @router.put("")
 async def update_settings(

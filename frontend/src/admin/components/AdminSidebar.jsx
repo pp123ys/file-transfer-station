@@ -10,7 +10,7 @@ export default function AdminSidebar() {
     { path: '/admin/users', label: '用户管理', icon: 'users' },
     { path: '/admin/files', label: '文件管理', icon: 'files' },
     { path: '/admin/settings', label: '系统设置', icon: 'settings' },
-    { path: '/admin/logs', label: '操作日志', icon: 'logs' },
+    { path: '/admin/audit-logs', label: '操作日志', icon: 'logs' },
   ];
 
   const getIcon = (iconName) => {

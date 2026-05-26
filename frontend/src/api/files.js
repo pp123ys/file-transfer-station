@@ -77,7 +77,9 @@ export const filesAPI = {
 
   // 获取文件预览URL
   getPreviewUrl: (fileId) => {
-    return `${api.defaults.baseURL}/api/files/preview/${fileId}`;
+    const token = localStorage.getItem('access_token');
+    const base = `${api.defaults.baseURL}/api/files/preview/${fileId}`;
+    return token ? `${base}?token=${encodeURIComponent(token)}` : base;
   },
 
   // 更新文件（重命名/移动）

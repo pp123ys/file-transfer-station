@@ -1,4 +1,4 @@
-﻿from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile, status
@@ -146,7 +146,7 @@ class FileService:
     @staticmethod
     async def upload_file(db: Session, user: User, upload_file: UploadFile, parent_id: Optional[int] = None) -> File:
         """上传文件"""
-        db_path, file_size = await save_upload_file(upload_file, user.id)
+        db_path, file_size = await save_upload_file(upload_file, user.id, db)
         
         existing = db.query(File).filter(
             File.user_id == user.id,
@@ -286,6 +286,7 @@ class FileService:
     def get_storage_usage(db: Session, user: User) -> dict:
         """获取用户存储使用情况（不含软删除文件）"""
         from app.config import STORAGE_QUOTA_BYTES
+        from app.models.system_config import SystemConfig
         from sqlalchemy import func
 
         result = db.query(func.coalesce(func.sum(File.size), 0)).filter(
@@ -294,7 +295,13 @@ class FileService:
         ).scalar()
 
         used = int(result)
-        total = STORAGE_QUOTA_BYTES
+        
+        config = db.query(SystemConfig).filter(SystemConfig.config_key == 'storage_quota').first()
+        if config and config.config_value.isdigit():
+            total = int(config.config_value) * 1024 * 1024 * 1024
+        else:
+            total = STORAGE_QUOTA_BYTES
+            
         available = max(0, total - used)
 
         return {"used": used, "total": total, "available": available}

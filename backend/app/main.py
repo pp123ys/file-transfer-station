@@ -7,13 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.database import engine
-from app.models import user, file
+from app.models import user, file, admin, audit_log, system_config
 from app.routers import auth, files, admin_auth, admin_users, admin_files, admin_dashboard, admin_settings, admin_audit_logs
 from app.utils.rate_limit import get_limiter
 
 # Create tables
 user.Base.metadata.create_all(bind=engine)
 file.Base.metadata.create_all(bind=engine)
+admin.Base.metadata.create_all(bind=engine)
+audit_log.Base.metadata.create_all(bind=engine)
+system_config.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="罐头文件管理器",

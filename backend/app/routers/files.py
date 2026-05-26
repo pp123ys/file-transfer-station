@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
+﻿from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -9,7 +9,7 @@ from app.schemas.file import (
     FileUpdate, MessageResponse, FileType, StorageInfo
 )
 from app.services.file import FileService
-from app.utils.security import get_current_user, get_user_from_token
+from app.utils.security import get_current_user, get_optional_user, get_user_from_token
 from app.utils.file import get_file_path
 import mimetypes
 
@@ -96,30 +96,37 @@ async def download_file(
 @router.get("/preview/{file_id}")
 async def preview_file(
     file_id: int,
-    current_user: User = Depends(get_current_user),
+    request: Request,
+    token: Optional[str] = Query(None),
+    current_user: User = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
-    """预览文件"""
+    """preview file"""
+    if not current_user and token:
+        from app.utils.security import decode_token
+        payload = decode_token(token)
+        if payload and payload.get("sub"):
+            user_id = int(payload["sub"])
+            current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     file = FileService.get_file_by_id(db, file_id, current_user)
     if not file:
-        raise HTTPException(status_code=404, detail="文件不存在")
-
+        raise HTTPException(status_code=404, detail="File not found")
     if file.is_folder:
-        raise HTTPException(status_code=400, detail="文件夹无法预览")
-
+        raise HTTPException(status_code=400, detail="Cannot preview folder")
     file_path = get_file_path(current_user.id, file.path)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="文件不存在")
-
+        raise HTTPException(status_code=404, detail="File not found")
     mime_type, _ = mimetypes.guess_type(str(file_path))
     if mime_type is None:
         mime_type = "application/octet-stream"
-
     return FileResponse(
         path=str(file_path),
         media_type=mime_type,
         filename=file.name
     )
+
 
 @router.put("/{file_id}", response_model=FileSchema)
 async def update_file(

@@ -1,9 +1,10 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.user import UserCreate, UserResponse, AuthResponse
 from app.services.auth import AuthService
+from app.services.config import ConfigService
 from app.utils.security import get_current_user
 from app.utils.rate_limit import get_limiter
 from app.models.user import User
@@ -15,6 +16,12 @@ limiter = get_limiter()
 @limiter.limit("5/minute")
 async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """用户注册"""
+    if not ConfigService.is_registration_allowed(db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="当前系统已关闭用户注册"
+        )
+    
     user = AuthService.create_user(db, user_data)
     token = AuthService.create_token(user)
     

@@ -34,6 +34,6 @@ ALLOWED_EXTENSIONS = [
 # 调试模式
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# 存储配额配置
-STORAGE_QUOTA_GB = int(os.getenv("STORAGE_QUOTA_GB", "2"))
+# 存储配额配置（设计文档要求：10GB）
+STORAGE_QUOTA_GB = int(os.getenv("STORAGE_QUOTA_GB", "10"))
 STORAGE_QUOTA_BYTES = STORAGE_QUOTA_GB * 1024 * 1024 * 1024

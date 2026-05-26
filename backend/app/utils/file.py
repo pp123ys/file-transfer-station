@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 from fastapi import UploadFile, HTTPException, status
 from app.config import STORAGE_PATH, MAX_FILE_SIZE, ALLOWED_EXTENSIONS
+from sqlalchemy.orm import Session
 
 def get_user_storage_path(user_id: int) -> Path:
     """获取用户的存储路径"""
@@ -36,7 +37,7 @@ def validate_filename(filename: str) -> bool:
     dangerous_chars = ['..', '/', '\\', '\x00']
     return not any(char in filename for char in dangerous_chars)
 
-async def save_upload_file(upload_file: UploadFile, user_id: int) -> tuple[str, int]:
+async def save_upload_file(upload_file: UploadFile, user_id: int, db: Session = None) -> tuple[str, int]:
     """保存上传的文件，返回(db_path, file_size)"""
     if not upload_file.filename:
         raise HTTPException(
