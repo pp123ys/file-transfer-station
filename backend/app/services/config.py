@@ -43,3 +43,14 @@ class ConfigService:
         if value:
             return value.lower() == 'true'
         return True
+
+    @staticmethod
+    def set_config(db: Session, key: str, value: str):
+        """设置单个配置值"""
+        config = db.query(SystemConfig).filter(SystemConfig.config_key == key).first()
+        if config:
+            config.config_value = value
+        else:
+            config = SystemConfig(config_key=key, config_value=value)
+            db.add(config)
+        db.commit()
