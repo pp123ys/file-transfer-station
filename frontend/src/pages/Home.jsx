@@ -59,7 +59,16 @@ export default function Home() {
       } else {
         response = await filesAPI.getFiles(currentFolderId, currentType);
       }
-      setFiles(response.files);
+      
+      // 处理文件，添加 URL 和缩略图 URL
+      const processedFiles = response.files.map(file => ({
+        ...file,
+        url: filesAPI.getPreviewUrl(file.id),
+        thumbnail_url: file.thumbnail_path ? filesAPI.getThumbnailUrl(file.id) : null,
+        type: file.name.includes('.') ? 'application/octet-stream' : '',
+      }));
+      
+      setFiles(processedFiles);
     } catch (err) {
       console.error('加载文件失败:', err);
     } finally {

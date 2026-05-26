@@ -1,4 +1,4 @@
-﻿import api from './index';
+import api from './index';
 
 export const filesAPI = {
   // 获取文件列表
@@ -80,6 +80,11 @@ export const filesAPI = {
     const token = localStorage.getItem('access_token');
     const base = `${api.defaults.baseURL}/api/files/preview/${fileId}`;
     return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+  },
+
+  // 获取文件缩略图URL
+  getThumbnailUrl: (fileId) => {
+    return `${api.defaults.baseURL}/api/files/thumbnail/${fileId}`;
   },
 
   // 更新文件（重命名/移动）

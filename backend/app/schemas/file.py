@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -23,6 +23,8 @@ class FolderCreate(BaseModel):
 class FileResponse(FileBase):
     id: int
     user_id: int
+    path: Optional[str] = None
+    thumbnail_path: Optional[str] = None
     is_folder: bool
     size: int
     created_at: datetime

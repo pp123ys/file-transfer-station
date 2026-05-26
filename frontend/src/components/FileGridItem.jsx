@@ -54,8 +54,8 @@ export default function FileGridItem({ file, onClick, onContextMenu }) {
     );
   };
 
-  const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg)$/.test(file.name);
-  const showThumbnail = isImage && file.thumbnail_url;
+  const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
+  const showThumbnail = isImage && (file.thumbnail_url || file.url);
 
   return (
     <div

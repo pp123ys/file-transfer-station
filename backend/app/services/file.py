@@ -180,7 +180,10 @@ class FileService:
         if is_image_file(extension):
             source_path = get_user_storage_path(user.id) / db_path
             thumbnail_path = thumbnail_service.get_full_thumbnail_path(user.id, db_file.id, extension)
-            thumbnail_service.generate_thumbnail(str(source_path), str(thumbnail_path))
+            success = thumbnail_service.generate_thumbnail(str(source_path), str(thumbnail_path))
+            if success:
+                db_file.thumbnail_path = thumbnail_service.get_thumbnail_path(user.id, db_file.id, extension)
+                db.commit()
         
         return db_file
     
