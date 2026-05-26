@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 from datetime import datetime
+from app.database import beijing_now
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile, status
 from app.models.file import File
@@ -97,7 +98,7 @@ class FileService:
         """递归恢复文件及其子文件"""
         file.is_deleted = False
         file.deleted_at = None
-        file.updated_at = datetime.utcnow()
+        file.updated_at = beijing_now()
         
         if file.is_folder:
             children = db.query(File).filter(
@@ -226,7 +227,7 @@ class FileService:
             
             file.parent_id = update_data.parent_id
         
-        file.updated_at = datetime.utcnow()
+        file.updated_at = beijing_now()
         
         db.commit()
         db.refresh(file)
@@ -254,8 +255,8 @@ class FileService:
             db.delete(file)
         else:
             file.is_deleted = True
-            file.deleted_at = datetime.utcnow()
-            file.updated_at = datetime.utcnow()
+            file.deleted_at = beijing_now()
+            file.updated_at = beijing_now()
             db.flush()
             if file.is_folder:
                 FileService._soft_delete_folder_recursive(db, file)
@@ -272,8 +273,8 @@ class FileService:
         
         for child in children:
             child.is_deleted = True
-            child.deleted_at = datetime.utcnow()
-            child.updated_at = datetime.utcnow()
+            child.deleted_at = beijing_now()
+            child.updated_at = beijing_now()
             if child.is_folder:
                 FileService._soft_delete_folder_recursive(db, child)
     

@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.config import ADMIN_SECRET_KEY, ADMIN_ALGORITHM, ADMIN_ACCESS_TOKEN_EXPIRE_DAYS
-from app.database import get_db
+from app.database import get_db, beijing_now
 from app.models.admin import Admin
 
 admin_security = HTTPBearer()
@@ -25,9 +25,9 @@ def get_password_hash(password: str) -> str:
 def create_admin_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = beijing_now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=ADMIN_ACCESS_TOKEN_EXPIRE_DAYS)
+        expire = beijing_now() + timedelta(days=ADMIN_ACCESS_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, ADMIN_SECRET_KEY, algorithm=ADMIN_ALGORITHM)
     return encoded_jwt

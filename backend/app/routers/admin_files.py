@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session
 from typing import Optional
-from app.database import get_db
+from app.database import get_db, beijing_now
 from app.schemas.file import FileResponse
 from app.services.admin import AdminService
 from app.utils.admin_security import get_current_admin
@@ -106,8 +106,8 @@ async def delete_file(
         db.delete(file)
     else:
         file.is_deleted = True
-        file.deleted_at = datetime.utcnow()
-        file.updated_at = datetime.utcnow()
+        file.deleted_at = beijing_now()
+        file.updated_at = beijing_now()
         db.flush()
         if file.is_folder:
             _soft_delete_folder_recursive(db, file)
@@ -136,8 +136,8 @@ def _soft_delete_folder_recursive(db: Session, folder: File) -> None:
     
     for child in children:
         child.is_deleted = True
-        child.deleted_at = datetime.utcnow()
-        child.updated_at = datetime.utcnow()
+        child.deleted_at = beijing_now()
+        child.updated_at = beijing_now()
         if child.is_folder:
             _soft_delete_folder_recursive(db, child)
 

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, BigInteger, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database import Base
+from app.database import Base, beijing_now
 
 class File(Base):
     __tablename__ = "files"
@@ -16,8 +16,8 @@ class File(Base):
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     thumbnail_path = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
+    updated_at = Column(DateTime, default=beijing_now, onupdate=beijing_now)
     
     owner = relationship("User", back_populates="files")
     parent = relationship("File", remote_side=[id], backref="children")

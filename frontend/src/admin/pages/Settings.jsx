@@ -95,6 +95,22 @@ export default function Settings() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            注册需要邮箱验证
+          </label>
+          <Toggle
+            checked={configs.require_email !== 'false'}
+            onChange={(e) => setConfigs({
+              ...configs,
+              require_email: e.target.checked ? 'true' : 'false'
+            })}
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            关闭后用户注册时无需填写邮箱和验证码，仅需用户名和密码
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             最大文件大小 (MB)
           </label>
           <input

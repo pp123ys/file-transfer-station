@@ -1,6 +1,7 @@
 import logging
 import random
 from datetime import datetime, timedelta
+from app.database import beijing_now
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.email_code import EmailVerificationCode
@@ -17,7 +18,7 @@ class EmailService:
     @staticmethod
     def save_verification_code(db: Session, email: str, code: str, expires_minutes: int = 10):
         """保存验证码到数据库"""
-        expires_at = datetime.utcnow() + timedelta(minutes=expires_minutes)
+        expires_at = beijing_now() + timedelta(minutes=expires_minutes)
         verification = EmailVerificationCode(
             email=email,
             code=code,
@@ -32,7 +33,7 @@ class EmailService:
         verification = db.query(EmailVerificationCode).filter(
             EmailVerificationCode.email == email,
             EmailVerificationCode.code == code,
-            EmailVerificationCode.expires_at > datetime.utcnow()
+            EmailVerificationCode.expires_at > beijing_now()
         ).first()
         return verification is not None
 
@@ -48,7 +49,7 @@ class EmailService:
     @staticmethod
     def check_send_frequency(db: Session, email: str, max_count: int = 3, window_minutes: int = 10) -> bool:
         """检查发送频率，同一邮箱10分钟内最多发送max_count次"""
-        window_start = datetime.utcnow() - timedelta(minutes=window_minutes)
+        window_start = beijing_now() - timedelta(minutes=window_minutes)
         count = db.query(EmailVerificationCode).filter(
             EmailVerificationCode.email == email,
             EmailVerificationCode.created_at >= window_start

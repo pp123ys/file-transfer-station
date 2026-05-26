@@ -19,14 +19,14 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     const data = await authAPI.login(username, password);
-    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('access_token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     return data;
   };
 
-  const register = async (username, password, email) => {
-    const data = await authAPI.register(username, password, email);
+  const register = async (userData) => {
+    const data = await authAPI.register(userData);
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);

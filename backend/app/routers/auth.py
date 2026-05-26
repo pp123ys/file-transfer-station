@@ -13,6 +13,14 @@ from app.models.user import User
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 limiter = get_limiter()
 
+@router.get("/register-config")
+async def get_register_config(db: Session = Depends(get_db)):
+    """"""
+    return {
+        "allow_register": ConfigService.is_registration_allowed(db),
+        "require_email": ConfigService.is_email_required(db)
+    }
+
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
@@ -24,7 +32,22 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
         )
     
     email_verified = False
-    if user_data.email and user_data.verification_code:
+    email_required = ConfigService.is_email_required(db)
+    
+    if email_required:
+        if not user_data.email or not user_data.verification_code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=""
+            )
+        if not EmailService.verify_code(db, user_data.email, user_data.verification_code):
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail=""
+            )
+        EmailService.delete_used_code(db, user_data.email, user_data.verification_code)
+        email_verified = True
+    elif user_data.email and user_data.verification_code:
         if not EmailService.verify_code(db, user_data.email, user_data.verification_code):
             raise HTTPException(
                 status_code=status.HTTP_410_GONE,
@@ -63,7 +86,8 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "email_missing": user.email is None
+            "email_missing": user.email is None,
+            "created_at": str(user.created_at) if user.created_at else None
         }
     )
 

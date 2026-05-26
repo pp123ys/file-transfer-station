@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database import Base
+from app.database import Base, beijing_now
 
 
 class AuditLog(Base):
@@ -14,7 +14,7 @@ class AuditLog(Base):
     target_id = Column(Integer, index=True)
     details = Column(Text)
     ip_address = Column(String(45))
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=beijing_now, index=True)
 
     admin = relationship("Admin")
 

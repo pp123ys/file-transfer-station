@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from datetime import datetime
-from app.database import Base
+from app.database import Base, beijing_now
 
 
 class Admin(Base):
@@ -11,7 +11,7 @@ class Admin(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=beijing_now)
 
     def __repr__(self):
         return f"<Admin {self.username}>"
