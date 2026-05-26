@@ -24,8 +24,18 @@ export default function Profile() {
   const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
+    loadUserInfo();
     loadStorage();
   }, []);
+
+  const loadUserInfo = async () => {
+    try {
+      const data = await authAPI.getCurrentUser();
+      localStorage.setItem('user', JSON.stringify(data));
+    } catch (err) {
+      console.error('load user failed:', err);
+    }
+  };
 
   const loadStorage = async () => {
     try {
