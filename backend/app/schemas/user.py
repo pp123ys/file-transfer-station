@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -8,6 +8,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=6)
+    verification_code: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
@@ -34,6 +35,9 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class LoginResponse(BaseModel):
+    token: str
+    user: Dict
 
 class ChangePasswordRequest(BaseModel):
     old_password: str = Field(..., min_length=1)

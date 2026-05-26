@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.user import UserCreate, UserResponse, AuthResponse
+from app.schemas.user import UserCreate, UserResponse, AuthResponse, LoginResponse
 from app.services.auth import AuthService
 from app.services.config import ConfigService
+from app.services.email import EmailService
 from app.utils.security import get_current_user
 from app.utils.rate_limit import get_limiter
 from app.models.user import User
@@ -22,7 +23,17 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
             detail="当前系统已关闭用户注册"
         )
     
-    user = AuthService.create_user(db, user_data)
+    email_verified = False
+    if user_data.email and user_data.verification_code:
+        if not EmailService.verify_code(db, user_data.email, user_data.verification_code):
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail="验证码已过期，请重新发送"
+            )
+        EmailService.delete_used_code(db, user_data.email, user_data.verification_code)
+        email_verified = True
+    
+    user = AuthService.create_user(db, user_data, email_verified=email_verified)
     token = AuthService.create_token(user)
     
     return AuthResponse(
@@ -31,7 +42,7 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
         user=UserResponse.model_validate(user)
     )
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=LoginResponse)
 @limiter.limit("10/minute")
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """用户登录"""
@@ -46,10 +57,14 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     
     token = AuthService.create_token(user)
     
-    return AuthResponse(
-        access_token=token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user)
+    return LoginResponse(
+        token=token,
+        user={
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "email_missing": user.email is None
+        }
     )
 
 @router.get("/me", response_model=UserResponse)

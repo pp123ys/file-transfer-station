@@ -9,7 +9,7 @@ class AuthService:
     """认证服务"""
     
     @staticmethod
-    def create_user(db: Session, user_data: UserCreate) -> User:
+    def create_user(db: Session, user_data: UserCreate, email_verified: bool = False) -> User:
         """创建新用户"""
         # 检查用户名是否存在
         existing_user = db.query(User).filter(User.username == user_data.username).first()
@@ -38,7 +38,8 @@ class AuthService:
         db_user = User(
             username=user_data.username,
             email=email,
-            password_hash=hashed_password
+            password_hash=hashed_password,
+            email_verified=email_verified
         )
         db.add(db_user)
         db.commit()
