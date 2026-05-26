@@ -2,14 +2,19 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api/auth';
 import { filesAPI } from '../api/files';
+import { completeEmail, sendVerificationCode } from '../api/email';
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState(user?.email || '');
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [storage, setStorage] = useState(null);
+
+  const [emailStep, setEmailStep] = useState(user?.email ? 'done' : 'input');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState('');
 
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
@@ -40,17 +45,51 @@ export default function Profile() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    setMessage({ type: '', text: '' });
-
+  const handleSendCode = async (e) => {
+    e.preventDefault();
+    setEmailLoading(true);
+    setEmailError('');
+    setEmailSuccess('');
+    
     try {
-      setMessage({ type: 'success', text: '保存成功' });
-      setEditing(false);
+      await sendVerificationCode(email);
+      setEmailStep('verify');
+      setEmailSuccess('验证码已发送');
     } catch (err) {
-      setMessage({ type: 'error', text: '保存失败，请重试' });
+      setEmailError(err.response?.data?.detail || '发送失败');
     } finally {
-      setSaving(false);
+      setEmailLoading(false);
+    }
+  };
+
+  const handleComplete = async (e) => {
+    e.preventDefault();
+    setEmailLoading(true);
+    setEmailError('');
+    
+    try {
+      await completeEmail(email, verificationCode);
+      setEmailSuccess('邮箱补全成功');
+      setEmailStep('done');
+      window.location.reload();
+    } catch (err) {
+      setEmailError(err.response?.data?.detail || '验证失败');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setEmailLoading(true);
+    setEmailError('');
+    
+    try {
+      await sendVerificationCode(email);
+      setEmailSuccess('验证码已重新发送');
+    } catch (err) {
+      setEmailError(err.response?.data?.detail || '发送失败');
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -141,17 +180,74 @@ export default function Profile() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   邮箱
                 </label>
-                {editing ? (
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入邮箱"
-                  />
-                ) : (
+                {emailStep === 'done' ? (
                   <div className="px-4 py-2 bg-gray-50 rounded-md text-gray-900">
                     {user?.email || '未设置'}
+                  </div>
+                ) : emailStep === 'input' ? (
+                  <div className="space-y-3">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="请输入邮箱"
+                    />
+                    {emailError && (
+                      <div className="text-sm text-red-600">{emailError}</div>
+                    )}
+                    {emailSuccess && emailStep === 'input' && (
+                      <div className="text-sm text-green-600">{emailSuccess}</div>
+                    )}
+                    <button
+                      onClick={handleSendCode}
+                      disabled={emailLoading || !email}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {emailLoading ? '发送中...' : '发送验证码'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      验证码已发送至：{email}
+                    </p>
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="请输入验证码"
+                      maxLength={6}
+                    />
+                    {emailError && (
+                      <div className="text-sm text-red-600">{emailError}</div>
+                    )}
+                    {emailSuccess && emailStep === 'verify' && (
+                      <div className="text-sm text-green-600">{emailSuccess}</div>
+                    )}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setEmailStep('input')}
+                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      >
+                        返回
+                      </button>
+                      <button
+                        onClick={handleComplete}
+                        disabled={emailLoading || !verificationCode}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {emailLoading ? '验证中...' : '验证'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleResendCode}
+                      disabled={emailLoading}
+                      className="w-full text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      重新发送验证码
+                    </button>
                   </div>
                 )}
               </div>
@@ -166,38 +262,13 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-between">
+            <div className="mt-8">
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100"
+                className="w-full px-4 py-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100"
               >
                 退出登录
               </button>
-
-              {editing ? (
-                <div className="space-x-3">
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  编辑资料
-                </button>
-              )}
             </div>
           </div>
         </div>

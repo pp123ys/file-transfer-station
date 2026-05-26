@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,6 +8,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [showEmailPrompt, setShowEmailPrompt] = useState(false);
+  const [emailPrompt, setEmailPrompt] = useState('');
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,13 +20,26 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(username, password);
-      navigate('/');
+      const response = await login(username, password);
+      if (response.user?.email_missing) {
+        setEmailPrompt(response.user.email || '');
+        setShowEmailPrompt(true);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || '登录失败，请检查用户名和密码');
     } finally {
       setLoading(false);
     }
+  };
+
+  const continueToHome = () => {
+    navigate('/');
+  };
+
+  const goToProfile = () => {
+    navigate('/profile');
   };
 
   return (
@@ -136,6 +151,44 @@ export default function Login() {
             >
               知道了
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 邮箱补全提示弹窗 */}
+      {showEmailPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-warning-soft flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-warning-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">补全邮箱</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                为了账户安全，请补全您的邮箱地址。您可以在个人资料页面完成此操作。
+              </p>
+              {emailPrompt && (
+                <p className="text-sm text-gray-700 mt-2 font-medium">
+                  推荐邮箱：{emailPrompt}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={continueToHome}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                稍后补全
+              </button>
+              <button
+                onClick={goToProfile}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                立即补全
+              </button>
+            </div>
           </div>
         </div>
       )}
