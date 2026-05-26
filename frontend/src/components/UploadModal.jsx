@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { filesAPI } from '../api/files';
 import { useIsMobile } from '../hooks/useMediaQuery';
+import UploadErrorAlert from './UploadErrorAlert';
 
 export default function UploadModal({ isOpen, onClose, currentFolderId, onUploadSuccess, storage }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
   const [errors, setErrors] = useState({});
+  const [uploadError, setUploadError] = useState(null);
   const dropZoneRef = useRef(null);
   const isMobile = useIsMobile();
 
@@ -16,8 +18,34 @@ export default function UploadModal({ isOpen, onClose, currentFolderId, onUpload
       setFiles([]);
       setProgress({});
       setErrors({});
+      setUploadError(null);
     }
   }, [isOpen]);
+
+  const validateFile = (file) => {
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain', 'text/markdown',
+      'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4',
+      'video/mp4', 'video/webm', 'video/avi',
+      'application/json', 'application/xml'
+    ];
+    
+    const blockedExtensions = ['exe', 'bat', 'sh', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar'];
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    
+    if (blockedExtensions.includes(fileExt)) {
+      return { valid: false, message: `禁止的文件类型：.${fileExt}` };
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+      return { valid: false, message: `不支持的文件类型：${file.type || file.name}` };
+    }
+    
+    return { valid: true };
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -28,11 +56,29 @@ export default function UploadModal({ isOpen, onClose, currentFolderId, onUpload
     e.preventDefault();
     e.stopPropagation();
     const droppedFiles = Array.from(e.dataTransfer.files);
+    
+    for (const file of droppedFiles) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        setUploadError(file.name);
+        return;
+      }
+    }
+    
     setFiles(prev => [...prev, ...droppedFiles]);
   };
 
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
+    
+    for (const file of selectedFiles) {
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        setUploadError(file.name);
+        return;
+      }
+    }
+    
     setFiles(prev => [...prev, ...selectedFiles]);
   };
 
@@ -308,44 +354,50 @@ export default function UploadModal({ isOpen, onClose, currentFolderId, onUpload
   );
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className="fixed inset-0 bg-black/50 z-50"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            onClick={onClose}
-          />
-          
-          {isMobile ? (
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <>
             <motion.div
-              className="fixed bottom-0 left-0 right-0 z-50"
-              variants={drawerVariants}
+              className="fixed inset-0 bg-black/50 z-50"
+              variants={backdropVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-            >
-              {modalContent}
-            </motion.div>
-          ) : (
-            <motion.div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-            >
+              onClick={onClose}
+            />
+            
+            {isMobile ? (
               <motion.div
-                variants={modalVariants}
+                className="fixed bottom-0 left-0 right-0 z-50"
+                variants={drawerVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
               >
-                {desktopContent}
+                {modalContent}
               </motion.div>
-            </motion.div>
-          )}
-        </>
+            ) : (
+              <motion.div
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              >
+                <motion.div
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  {desktopContent}
+                </motion.div>
+              </motion.div>
+            )}
+          </>
+        )}
+      </AnimatePresence>
+      
+      {uploadError && (
+        <UploadErrorAlert filename={uploadError} onClose={() => setUploadError(null)} />
       )}
-    </AnimatePresence>
+    </>
   );
 }

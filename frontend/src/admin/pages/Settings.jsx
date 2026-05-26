@@ -121,6 +121,90 @@ export default function Settings() {
           </p>
         </div>
 
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">邮件配置 (SMTP)</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                SMTP 服务器
+              </label>
+              <input
+                type="text"
+                value={configs.smtp_host || ''}
+                onChange={(e) => setConfigs({ ...configs, smtp_host: e.target.value })}
+                placeholder="smtp.example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                SMTP 端口
+              </label>
+              <input
+                type="number"
+                value={configs.smtp_port || 587}
+                onChange={(e) => setConfigs({ ...configs, smtp_port: e.target.value })}
+                placeholder="587"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                SMTP 用户名
+              </label>
+              <input
+                type="text"
+                value={configs.smtp_user || ''}
+                onChange={(e) => setConfigs({ ...configs, smtp_user: e.target.value })}
+                placeholder="your-email@example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                SMTP 密码
+              </label>
+              <input
+                type="password"
+                value={configs.smtp_password || ''}
+                onChange={(e) => setConfigs({ ...configs, smtp_password: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                发件人邮箱
+              </label>
+              <input
+                type="email"
+                value={configs.smtp_from_email || ''}
+                onChange={(e) => setConfigs({ ...configs, smtp_from_email: e.target.value })}
+                placeholder="noreply@example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                发件人名称
+              </label>
+              <input
+                type="text"
+                value={configs.smtp_from_name || ''}
+                onChange={(e) => setConfigs({ ...configs, smtp_from_name: e.target.value })}
+                placeholder="文件传输系统"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="pt-4">
           <button
             onClick={handleSave}

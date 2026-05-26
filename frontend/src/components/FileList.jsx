@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import FileItem from './FileItem';
+import FileGridItem from './FileGridItem';
 import MobileFileCard from './MobileFileCard';
 import Loading from './Loading';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
 export default function FileList({ files, onFileClick, onContextMenu, loading, isTrashView = false }) {
   const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState('list');
 
   const formatSize = (bytes) => {
     if (bytes === 0) return '-';
@@ -77,49 +80,100 @@ export default function FileList({ files, onFileClick, onContextMenu, loading, i
   const folders = files.filter(f => f.is_folder);
   const docs = files.filter(f => !f.is_folder);
 
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'list' ? 'grid' : 'list');
+  };
+
+  const renderGridView = () => (
+    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {folders.map((folder) => (
+        <FileGridItem
+          key={folder.id}
+          file={folder}
+          onClick={() => onFileClick(folder)}
+          onContextMenu={(e) => onContextMenu(e, folder)}
+        />
+      ))}
+      {docs.map((file) => (
+        <FileGridItem
+          key={file.id}
+          file={file}
+          onClick={() => onFileClick(file)}
+          onContextMenu={(e) => onContextMenu(e, file)}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="bg-canvas rounded-md shadow-level-2">
-      <div className="hidden grid-cols-12 gap-4 px-6 py-3 border-b border-hairline text-caption-mono text-mute uppercase tracking-wider">
-        <div className="col-span-5">名称</div>
-        <div className="col-span-2 text-right">大小</div>
-        <div className="col-span-5 text-right">{isTrashView ? '删除时间' : '修改时间'}</div>
+    <div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={toggleViewMode}
+          className="p-2 rounded hover:bg-canvas-soft transition-colors text-mute hover:text-ink"
+          title={viewMode === 'list' ? '切换到网格视图' : '切换到列表视图'}
+        >
+          {viewMode === 'list' ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM6 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
-      
-      <div className="divide-y divide-hairline">
-        {folders.length > 0 && (
-          <div>
-            {folders.map((folder) => (
+
+      {viewMode === 'grid' ? (
+        <div className="bg-canvas rounded-md shadow-level-2 p-4">
+          {renderGridView()}
+        </div>
+      ) : (
+        <div className="bg-canvas rounded-md shadow-level-2">
+          <div className="hidden grid-cols-12 gap-4 px-6 py-3 border-b border-hairline text-caption-mono text-mute uppercase tracking-wider">
+            <div className="col-span-5">名称</div>
+            <div className="col-span-2 text-right">大小</div>
+            <div className="col-span-5 text-right">{isTrashView ? '删除时间' : '修改时间'}</div>
+          </div>
+          
+          <div className="divide-y divide-hairline">
+            {folders.length > 0 && (
+              <div>
+                {folders.map((folder) => (
+                  <FileItem
+                    key={folder.id}
+                    file={folder}
+                    onClick={() => onFileClick(folder)}
+                    onContextMenu={(e) => onContextMenu(e, folder)}
+                    formatSize={formatSize}
+                    formatDate={formatDate}
+                    isTrashView={isTrashView}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {docs.length > 0 && folders.length > 0 && (
+              <div className="border-t border-hairline">
+                <div className="px-6 py-2 text-caption-mono text-mute uppercase tracking-wider">文件</div>
+              </div>
+            )}
+            
+            {docs.map((file) => (
               <FileItem
-                key={folder.id}
-                file={folder}
-                onClick={() => onFileClick(folder)}
-                onContextMenu={(e) => onContextMenu(e, folder)}
+                key={file.id}
+                file={file}
+                onClick={() => onFileClick(file)}
+                onContextMenu={(e) => onContextMenu(e, file)}
                 formatSize={formatSize}
                 formatDate={formatDate}
                 isTrashView={isTrashView}
               />
             ))}
           </div>
-        )}
-        
-        {docs.length > 0 && folders.length > 0 && (
-          <div className="border-t border-hairline">
-            <div className="px-6 py-2 text-caption-mono text-mute uppercase tracking-wider">文件</div>
-          </div>
-        )}
-        
-        {docs.map((file) => (
-          <FileItem
-            key={file.id}
-            file={file}
-            onClick={() => onFileClick(file)}
-            onContextMenu={(e) => onContextMenu(e, file)}
-            formatSize={formatSize}
-            formatDate={formatDate}
-            isTrashView={isTrashView}
-          />
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
