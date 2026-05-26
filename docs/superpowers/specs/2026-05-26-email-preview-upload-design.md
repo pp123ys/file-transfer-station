@@ -549,19 +549,76 @@ box-shadow:
 
 ## 七、技术架构
 
-### 6.1 技术栈
+### 7.1 技术栈
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
 | 前端框架 | React 18 | 现有技术栈 |
-| 样式 | Tailwind CSS | 现有技术栈 |
+| 样式 | Tailwind CSS + Vercel 主题 | 现有技术栈 + 设计系统 |
 | PDF 渲染 | react-pdf | PDF.js 的 React 封装 |
 | Word 渲染 | mammoth | 将 docx 转换为 HTML |
 | 后端框架 | FastAPI | 现有技术栈 |
 | 邮件发送 | aiosmtplib | 异步 SMTP 客户端 |
 | 缩略图生成 | Pillow | Python 图片处理库 |
 
-### 6.2 项目结构
+### 7.2 Tailwind 配置扩展
+
+为支持 Vercel 设计系统，需要扩展现有 Tailwind 配置：
+
+```js
+// tailwind.config.js 扩展
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#171717',
+        'on-primary': '#ffffff',
+        ink: '#171717',
+        body: '#4d4d4d',
+        mute: '#888888',
+        canvas: '#ffffff',
+        'canvas-soft': '#fafafa',
+        hairline: '#ebebeb',
+        link: '#0070f3',
+        error: '#ee0000',
+        'error-soft': '#f7d4d6',
+        warning: '#f5a623',
+        'warning-soft': '#ffefcf',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        sm: '6px',
+        md: '8px',
+        lg: '12px',
+        pill: '100px',
+      },
+      spacing: {
+        xxs: '4px',
+        xs: '8px',
+        sm: '12px',
+        md: '16px',
+        lg: '24px',
+        xl: '32px',
+      },
+      boxShadow: {
+        'card': '0 1px 1px rgba(0, 0, 0, 0.03), 0 2px 2px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 2px 2px rgba(0, 0, 0, 0.04), 0 8px 8px rgba(0, 0, 0, 0.04)',
+        'modal': '0 1px 1px rgba(0, 0, 0, 0.03), 0 8px 16px rgba(0, 0, 0, 0.05), 0 24px 32px rgba(0, 0, 0, 0.06)',
+      },
+      letterSpacing: {
+        'tight': '-0.028px',
+        'tighter': '-0.056px',
+        'tightest': '-0.06px',
+      },
+    },
+  },
+}
+```
+
+### 7.3 项目结构
 
 ```
 backend/
@@ -603,7 +660,7 @@ frontend/
 
 ---
 
-## 七、API 完整列表
+## 八、API 完整列表
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -618,7 +675,7 @@ frontend/
 
 ---
 
-## 八、配置项
+## 九、配置项
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
@@ -632,7 +689,7 @@ frontend/
 
 ---
 
-## 九、错误处理
+## 十、错误处理
 
 | 错误码 | 场景 | 响应消息 |
 |--------|------|----------|
@@ -645,7 +702,7 @@ frontend/
 
 ---
 
-## 十、待确认事项
+## 十一、待确认事项
 
 - [ ] SMTP 配置由管理员在后台设置
 - [ ] 邮件发送预留接口，email_enabled 控制开关
@@ -654,7 +711,7 @@ frontend/
 
 ---
 
-## 十一、后续扩展
+## 十二、后续扩展
 
 1. **真实邮件发送接入** - 配置 SMTP 后启用
 2. **邮件模板美化** - HTML 模板
