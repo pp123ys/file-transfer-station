@@ -5,7 +5,9 @@ import { filesAPI } from '../api/files';
 import { completeEmail, sendVerificationCode } from '../api/email';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user: authUser, logout } = useAuth();
+  const [profileUser, setProfileUser] = useState(null);
+  const user = profileUser || authUser;
   const [email, setEmail] = useState(user?.email || '');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [storage, setStorage] = useState(null);
@@ -31,6 +33,7 @@ export default function Profile() {
   const loadUserInfo = async () => {
     try {
       const data = await authAPI.getCurrentUser();
+      setProfileUser(data);
       localStorage.setItem('user', JSON.stringify(data));
     } catch (err) {
       console.error('load user failed:', err);
